@@ -1,16 +1,16 @@
-= razyk
+= RazyK
 
-Description goes here.
+RazyK is a LazyK implementation by pure ruby.
 
-== Note on Patches/Pull Requests
- 
-* Fork the project.
-* Make your feature addition or bug fix.
-* Add tests for it. This is important so I don't break it in a
-  future version unintentionally.
-* Commit, do not mess with rakefile, version, or history.
-  (if you want to have your own version, that is fine but bump version in a commit by itself I can ignore when I pull)
-* Send me a pull request. Bonus points for topic branches.
+== LazyK
+LazyK is referentially transparent functional programming language.
+ * LazyK programs are expressed by only S, K, I combinators
+ * Lazy evaluation
+ * Stream I/O system
+
+For details, see website bellow.
+
+http://homepages.cwi.nl/~tromp/cl/lazy-k.html
 
 == Copyright
 
