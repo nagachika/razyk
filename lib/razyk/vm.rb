@@ -95,6 +95,22 @@ module RazyK
                             comb) # reuse :IN combinator
         stack.last.car = new_root
         stack.push(new_root)
+      when :CAR
+        return nil if stack.size < 1
+        x = stack.pop
+        root = x
+        x = x.cut_cdr
+        new_root = Pair.new(x, Combinator.new(:K))  # K means TRUE
+        root.replace(new_root)
+        stack.push(new_root)
+      when :CDR
+        return nil if stack.size < 1
+        x = stack.pop
+        root = x
+        x = x.cut_cdr
+        new_root = Pair.new(x, Pair.new(Combinator.new(:K), Combinator.new(:I))) # (K I) means FALSE
+        root.replace(new_root)
+        stack.push(new_root)
       end
       true
     end
