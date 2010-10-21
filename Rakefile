@@ -5,7 +5,7 @@ begin
   require 'jeweler'
   Jeweler::Tasks.new do |gem|
     gem.name = "razyk"
-    gem.summary = %Q{TODO: one-line summary of your gem}
+    gem.summary = %Q{pure ruby LazyK implementation}
     gem.description = %Q{RazyK is a LazyK implementetion by pure ruby}
     gem.email = "nagachika00@gmail.com"
     gem.homepage = "http://github.com/nagachika/razyk"
@@ -18,19 +18,30 @@ rescue LoadError
   puts "Jeweler (or a dependency) not available. Install it with: gem install jeweler"
 end
 
-require 'spec/rake/spectask'
-Spec::Rake::SpecTask.new(:spec) do |spec|
-  spec.libs << 'lib' << 'spec'
-  spec.spec_files = FileList['spec/**/*_spec.rb']
-end
+begin
+  require 'spec/rake/spectask'
+  Spec::Rake::SpecTask.new(:spec) do |spec|
+    spec.libs << 'lib' << 'spec'
+    spec.spec_files = FileList['spec/**/*_spec.rb']
+  end
 
-Spec::Rake::SpecTask.new(:rcov) do |spec|
-  spec.libs << 'lib' << 'spec'
-  spec.pattern = 'spec/**/*_spec.rb'
-  spec.rcov = true
-end
+  Spec::Rake::SpecTask.new(:rcov) do |spec|
+    spec.libs << 'lib' << 'spec'
+    spec.pattern = 'spec/**/*_spec.rb'
+    spec.rcov = true
+  end
 
-task :spec => :check_dependencies
+  task :spec => :check_dependencies
+rescue LoadError
+  require "rspec/core/rake_task"
+  RSpec::Core::RakeTask.new(:spec)
+
+  RSpec::Core::RakeTask.new(:rcov) do |spec|
+    spec.rcov = true
+  end
+
+  task :spec => :check_dependencies
+end
 
 task :default => :spec
 
