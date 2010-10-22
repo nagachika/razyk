@@ -1,13 +1,5 @@
 class RazyK::Parser
 
-prechigh
-  nonassoc  PRECHIGH
-  nonassoc  ZERO ONE
-  nonassoc  I K S SMALL_I IOTA
-  nonassoc  BACKSLASH ASTAR LPAR RPAR
-  nonassoc  PRECLOW
-preclow
-
 token I K S
 token SMALL_I
 token BACKSLASH
@@ -88,7 +80,7 @@ no_empty_jot_expr   :   ZERO jot_expr
                     ;
 
 jot_expr:   no_empty_jot_expr
-        |   /* epsilon */           = PRECHIGH
+        |   /* epsilon */
         {   result = Combinator.new(:I) }
         ;
 
