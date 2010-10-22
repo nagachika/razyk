@@ -74,6 +74,8 @@ module RazyK
   #  It represent term of combinators or terms.
   class Pair < DAGNode
     def initialize(car, cdr)
+      car = Combinator.new(car) unless car.is_a?(DAGNode)
+      cdr = Combinator.new(cdr) unless cdr.is_a?(DAGNode)
       super(:Pair, [], [car, cdr])
       @car = car
       @cdr = cdr

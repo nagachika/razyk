@@ -102,8 +102,7 @@ module RazyK
         else
           ch = ch.ord
         end
-        new_root = Pair.new(Pair.new(Combinator.new(:CONS),
-                                     integer_combinator(ch)),
+        new_root = Pair.new(Pair.new(:CONS, integer_combinator(ch)),
                             comb) # reuse :IN combinator
         stack.last.car = new_root
         stack.push(new_root)
@@ -113,7 +112,7 @@ module RazyK
         x = stack.pop
         root = x
         x = x.cut_cdr
-        new_root = Pair.new(x, Combinator.new(:K))  # K means TRUE
+        new_root = Pair.new(x, :K)  # K means TRUE
         root.replace(new_root)
         stack.push(new_root)
       when :CDR
@@ -122,7 +121,7 @@ module RazyK
         x = stack.pop
         root = x
         x = x.cut_cdr
-        new_root = Pair.new(x, Pair.new(Combinator.new(:K), Combinator.new(:I))) # (K I) means FALSE
+        new_root = Pair.new(x, Pair.new(:K, :I)) # (K I) means FALSE
         root.replace(new_root)
         stack.push(new_root)
       end
