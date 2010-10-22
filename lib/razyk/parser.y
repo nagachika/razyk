@@ -102,7 +102,7 @@ require "razyk/dag"
 
 def scan
   in_comment = false
-  @buf.each_char do |ch|
+  @buf.each_byte do |ch|
     if ch == "\n"
       in_comment = false
       next
@@ -140,3 +140,6 @@ def parse(str, opt={})
   yyparse self, :scan
 end
 
+def self.parse(str, opt={})
+  self.new.parse(str)
+end
