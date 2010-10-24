@@ -27,14 +27,14 @@ module RazyK
 
     def evaluate(root, gen=nil)
       stack = [root]
-      until step(stack).nil?
+      until step(stack, gen).nil?
         if gen
           gen.yield(self)
         end
       end
     end
 
-    def step(stack)
+    def step(stack, gen=nil)
       return nil if stack.empty?
       while stack.last.is_a?(Pair)
         stack.push(stack.last.car)
@@ -139,6 +139,16 @@ module RazyK
                                      Pair.new(Combinator.new(:CDR), f)))
         root.replace(new_root)
         stack.push(new_root)
+      when :INC
+        # (INC n) -> n+1 : increment church number
+        return nil if stack.size < 1
+        root = stack.pop
+        n = root.cut_cdr
+        unless /<(\d+)>/ =~ n.label
+          raise "argument of INC combinator is not a church number"
+        end
+        num = Regexp.last_match(1).to_i
+        root.replace(integer_combinator(num+1))
       end
       true
     end
