@@ -10,9 +10,11 @@ require "razyk/dag"
 
 module RazyK
   class VM
-    def initialize(tree)
+    def initialize(tree, input=$stdin, output=$stdout)
       @root = DAGNode.new(:root, [], [tree])
       @generator = nil
+      @input = input
+      @output = output
     end
 
     def tree
@@ -93,10 +95,10 @@ module RazyK
         a.car = f
         root.replace(d)
         stack.push(d)
-      when :IN
+      when :INPUT
         # (IN f) -> (CONS <CH> IN f) where <CH> is a byte from stdin
         return nil if stack.size < 1
-        ch = $stdin.getc
+        ch = @input.read(1)
         if ch.nil?
           ch = 256
         else
