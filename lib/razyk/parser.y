@@ -58,6 +58,21 @@ expr2   :   I
           result = Combinator.new(:S)
         }
         |   no_empty_jot_expr
+        {
+          comb = COmbinator.new(:I)
+          @jot.each do |i|
+            case i
+            when 0
+              comb = Pair.new(Pair.new(comb, Combinator.new(:S)),
+                              Combinator.new(:K))
+            when 1
+              comb = Pair.new(Combinator.new(:S),
+                              Pair.new(Combinator.new(:K), comb))
+            end
+          end
+          @jot.clear
+          result = comb
+        }
         |   BACKSLASH expr expr
         {
           result = Pair.new(val[1], val[2])
@@ -73,15 +88,13 @@ expr2   :   I
         ;
 
 no_empty_jot_expr   :   ZERO jot_expr
-                    { result = Pair.new(Pair.new(val[1], Combinator.new(:S)),
-                                        Combinator.new(:K)) }
+                    { @jot.push(0) }
                     |   ONE jot_expr
-                    { retult = Combinator.new(:Jot) }
+                    { @jot.push(1) }
                     ;
 
 jot_expr:   no_empty_jot_expr
         |   /* epsilon */
-        {   result = Combinator.new(:I) }
         ;
 
 end

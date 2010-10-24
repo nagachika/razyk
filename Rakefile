@@ -54,3 +54,7 @@ Rake::RDocTask.new do |rdoc|
   rdoc.rdoc_files.include('README*')
   rdoc.rdoc_files.include('lib/**/*.rb')
 end
+
+task :racc => [ "lib/razyk/parser.y" ] do
+  sh "racc -o lib/razyk/parser.rb lib/razyk/parser.y"
+end
