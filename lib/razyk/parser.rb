@@ -12,11 +12,11 @@ require "razyk/dag"
 module RazyK
   class Parser < Racc::Parser
 
-module_eval(<<'...end parser.y/module_eval...', 'parser.y', 107)
+module_eval(<<'...end parser.y/module_eval...', 'parser.y', 105)
 
 def scan
   in_comment = false
-  @buf.each_byte do |ch|
+  @buf.each_char do |ch|
     if ch == "\n"
       in_comment = false
       next
@@ -25,6 +25,7 @@ def scan
     tok = case ch
     when "#"
       in_comment = true
+      next
     when "I"
       [:I, ch]
     when "i"
@@ -51,6 +52,7 @@ end
 
 def parse(str, opt={})
   @buf = str
+  @jot = []
   yyparse self, :scan
 end
 
@@ -263,15 +265,13 @@ module_eval(<<'.,.,', 'parser.y', 57)
 
 module_eval(<<'.,.,', 'parser.y', 61)
   def _reduce_11(val, _values, result)
-              comb = COmbinator.new(:I)
+              comb = Combinator.new(:I)
           @jot.each do |i|
             case i
             when 0
-              comb = Pair.new(Pair.new(comb, Combinator.new(:S)),
-                              Combinator.new(:K))
+              comb = Pair.new(Pair.new(comb, :S), :K)
             when 1
-              comb = Pair.new(Combinator.new(:S),
-                              Pair.new(Combinator.new(:K), comb))
+              comb = Pair.new(:S, Pair.new(:K, comb))
             end
           end
           @jot.clear
@@ -281,7 +281,7 @@ module_eval(<<'.,.,', 'parser.y', 61)
   end
 .,.,
 
-module_eval(<<'.,.,', 'parser.y', 77)
+module_eval(<<'.,.,', 'parser.y', 75)
   def _reduce_12(val, _values, result)
               result = Pair.new(val[1], val[2])
         
@@ -289,7 +289,7 @@ module_eval(<<'.,.,', 'parser.y', 77)
   end
 .,.,
 
-module_eval(<<'.,.,', 'parser.y', 81)
+module_eval(<<'.,.,', 'parser.y', 79)
   def _reduce_13(val, _values, result)
               result = Pair.new(val[1], val[2])
         
@@ -297,7 +297,7 @@ module_eval(<<'.,.,', 'parser.y', 81)
   end
 .,.,
 
-module_eval(<<'.,.,', 'parser.y', 85)
+module_eval(<<'.,.,', 'parser.y', 83)
   def _reduce_14(val, _values, result)
               result = val[1]
         
@@ -305,14 +305,14 @@ module_eval(<<'.,.,', 'parser.y', 85)
   end
 .,.,
 
-module_eval(<<'.,.,', 'parser.y', 90)
+module_eval(<<'.,.,', 'parser.y', 88)
   def _reduce_15(val, _values, result)
      @jot.push(0) 
     result
   end
 .,.,
 
-module_eval(<<'.,.,', 'parser.y', 92)
+module_eval(<<'.,.,', 'parser.y', 90)
   def _reduce_16(val, _values, result)
      @jot.push(1) 
     result

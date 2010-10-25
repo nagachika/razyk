@@ -76,7 +76,7 @@ module RazyK
         root = x
         x = x.cut_cdr
         f = f.cut_cdr
-        if num
+        if num == 0
           root.replace(x)
           stack.push(x)
         else
@@ -127,28 +127,52 @@ module RazyK
         root.replace(new_root)
         stack.push(new_root)
       when :OUTPUT
-        # (OUTPUT f) -> ((PUTC (CAR f)) (OUTPUT (CDR f)))
+        # (OUTPUT f) -> ((PUTC ((CAR f) INC <0>) (OUTPUT (CDR f)))
         return nil if stack.size < 1
         f = stack.pop
         root = f
         f = f.cut_cdr
         root.cut_car
-        new_root = Pair.new(Pair.new(Combinator.new(:PUTC),
-                                     Pair.new(Combinator.new(:CAR), f)),
-                            Pair.new(comb, # reuse :INPUT combinator
-                                     Pair.new(Combinator.new(:CDR), f)))
+        new_root = Pair.new(
+                     Pair.new(
+                       Combinator.new(:PUTC),
+                       Pair.new(
+                         Pair.new(
+                           Pair.new(Combinator.new(:CAR), f),
+                           Combinator.new(:INC)),
+                         integer_combinator(0))),
+                     Pair.new(comb, # reuse :INPUT combinator
+                              Pair.new(Combinator.new(:CDR), f)))
         root.replace(new_root)
         stack.push(new_root)
       when :INC
         # (INC n) -> n+1 : increment church number
         return nil if stack.size < 1
         root = stack.pop
+        evaluate(root.cdr, gen)
         n = root.cut_cdr
         unless /<(\d+)>/ =~ n.label
           raise "argument of INC combinator is not a church number"
         end
         num = Regexp.last_match(1).to_i
         root.replace(integer_combinator(num+1))
+      when :PUTC
+        # (PUTC x y) -> y : evaluate x and putchar it
+        return nil if stack.size < 2
+        x = stack.pop
+        evaluate(x.cdr, gen)
+        unless x.cdr.label =~ /<(\d+)>/
+          raise "output is not church number"
+        end
+        num = Regexp.last_match(1).to_i
+        if num >= 256
+          return nil
+        end
+        @output.write([num].pack("C"))
+        root = stack.pop
+        y = root.cut_cdr
+        root.replace(y)
+        stack.push(y)
       end
       true
     end
@@ -160,6 +184,16 @@ module RazyK
         self
       rescue StopIteration
         nil
+      end
+    end
+
+    def run(&blk)
+      if blk
+        while reduce
+          blk.call(self)
+        end
+      else
+        evaluate(self.tree, nil)
       end
     end
   end

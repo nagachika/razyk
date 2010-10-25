@@ -59,15 +59,13 @@ expr2   :   I
         }
         |   no_empty_jot_expr
         {
-          comb = COmbinator.new(:I)
+          comb = Combinator.new(:I)
           @jot.each do |i|
             case i
             when 0
-              comb = Pair.new(Pair.new(comb, Combinator.new(:S)),
-                              Combinator.new(:K))
+              comb = Pair.new(Pair.new(comb, :S), :K)
             when 1
-              comb = Pair.new(Combinator.new(:S),
-                              Pair.new(Combinator.new(:K), comb))
+              comb = Pair.new(:S, Pair.new(:K, comb))
             end
           end
           @jot.clear
@@ -107,7 +105,7 @@ require "razyk/dag"
 
 def scan
   in_comment = false
-  @buf.each_byte do |ch|
+  @buf.each_char do |ch|
     if ch == "\n"
       in_comment = false
       next
@@ -116,6 +114,7 @@ def scan
     tok = case ch
     when "#"
       in_comment = true
+      next
     when "I"
       [:I, ch]
     when "i"
@@ -142,6 +141,7 @@ end
 
 def parse(str, opt={})
   @buf = str
+  @jot = []
   yyparse self, :scan
 end
 
