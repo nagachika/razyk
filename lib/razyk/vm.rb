@@ -80,21 +80,28 @@ module RazyK
           root.replace(x)
           stack.push(x)
         else
-          dec_pair = Pair.new(integer_combinator(num-1), f)
-          new_pair = Pair.new(f, Pair.new(dec_pair, x))
-          root.replace(new_pair)
-          stack.push(new_pair)
+          if f.label == :INC and /<(\d+)>/ =~ x.label
+            x_num = Regexp.last_match(1).to_i
+            x = integer_combinator(num + x_num)
+            root.replace(x)
+            stack.push(x)
+          else
+            dec_pair = Pair.new(integer_combinator(num-1), f)
+            new_pair = Pair.new(f, Pair.new(dec_pair, x))
+            root.replace(new_pair)
+            stack.push(new_pair)
+          end
         end
       when :CONS
         # (CONS a d f) -> (f a d)
         return nil if stack.size < 3
         f, d, a = stack.pop(3)
         root = f
-        f.cut_car
-        f = f.cut_cdr
-        a.car = f
-        root.replace(d)
-        stack.push(d)
+        f = f.cdr
+        new_root = Pair.new(Pair.new(f, a.cdr),
+                            d.cdr)
+        root.replace(new_root)
+        stack.push(new_root)
       when :INPUT
         # (IN f) -> (CONS <CH> IN f) where <CH> is a byte from stdin
         return nil if stack.size < 1
@@ -105,8 +112,9 @@ module RazyK
           ch = ch.ord
         end
         new_root = Pair.new(Pair.new(:CONS, integer_combinator(ch)),
-                            comb) # reuse :INPUT combinator
-        stack.last.car = new_root
+                            :DUMMY) # reuse :INPUT combinator
+        comb.replace(new_root)
+        new_root.cdr = comb
         stack.push(new_root)
       when :CAR
         # (CAR x) -> (x K)       (CAR = (Lx.x TRUE), TRUE = (Lxy.x) = K)
