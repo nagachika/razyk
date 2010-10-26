@@ -3,6 +3,7 @@
 require_relative "spec_helper"
 
 require "razyk/vm"
+require "stringio"
 
 include RazyK
 
