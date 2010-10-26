@@ -36,8 +36,8 @@ rescue LoadError
   require "rspec/core/rake_task"
   RSpec::Core::RakeTask.new(:spec)
 
-  RSpec::Core::RakeTask.new(:rcov) do |spec|
-    spec.rcov = true
+  RSpec::Core::RakeTask.new(:rcov) do |t|
+    t.rcov_opts = %q[--exclude "spec"]
   end
 
   task :spec => :check_dependencies
