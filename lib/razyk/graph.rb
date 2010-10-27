@@ -21,9 +21,22 @@ if defined?(GraphViz)
 
       def graph_internal(gv, tree, node, ctx)
         tree.to.each do |n|
-          gn = create_node(gv, n, ctx)
-          gv.add_edge(node, gn)
-          graph_internal(gv, n, gn, ctx)
+          cached = false
+          if ctx[:cache] and ctx[:cache][n.object_id]
+            gn = ctx[:cache][n.object_id]
+            cached = true
+          else
+            gn = create_node(gv, n, ctx)
+            ctx[:cache][n.object_id] = gn
+          end
+          if tree.car == n
+            gv.add_edge(node, gn, :color => ctx[:car_arrow_color])
+          else
+            gv.add_edge(node, gn, :color => ctx[:cdr_arrow_color])
+          end
+          unless cached
+            graph_internal(gv, n, gn, ctx)
+          end
         end
       end
       module_function :graph_internal
@@ -31,9 +44,14 @@ if defined?(GraphViz)
       #
       # create GraphViz from combinator tree
       #
-      def graph(tree)
+      def graph(tree, opt={})
         gv = GraphViz.new("CombinatorGraph")
-        ctx = { :index => 0 }
+        ctx = {
+          :index => 0,
+          :car_arrow_color => opt[:car_arrow_color] || :red,
+          :cdr_arrow_color => opt[:cdr_arrow_color] || :black,
+          :cache => (opt[:style] == :dag) ? {} : nil,
+        }
         node = create_node(gv, tree, ctx)
         graph_internal(gv, tree, node, ctx)
         gv
