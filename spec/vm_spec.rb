@@ -94,7 +94,7 @@ describe VM do
     vm = VM.new(root, buf)
     vm.evaluate(vm.tree)
     vm.tree.should be_is_a(Combinator)
-    vm.tree.label.should == :"<100>"
+    vm.tree.label.should == 100
     buf.pos.should == 1
   end
 
@@ -113,9 +113,9 @@ describe VM do
 
   it "should reduce PUTC combinator" do
     putc = Combinator.new(:PUTC)
-    a = Combinator.new(:"<97>")
+    a = Combinator.new(97)
     x = Combinator.new(:X)
-    decode = Pair.new(Pair.new(a, :INC), :"<0>")
+    decode = Pair.new(Pair.new(a, :INC), 0)
     root = Pair.new(Pair.new(putc, decode), x)
     ibuf = StringIO.new("")
     obuf = StringIO.new("")
