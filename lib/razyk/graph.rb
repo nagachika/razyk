@@ -1,4 +1,4 @@
-require "razyk/dag"
+require "razyk/node"
 
 begin
   require "graphviz"

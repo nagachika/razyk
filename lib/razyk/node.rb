@@ -15,7 +15,7 @@ module RazyK
   #  S, K, I are Combinator
   #  (S . K) is Pair
   #
-  class DAGNode
+  class Node
     def initialize(label, from=[], to=[])
       @label = label
       @from = []
@@ -56,7 +56,7 @@ module RazyK
     end
   end
 
-  class Combinator < DAGNode
+  class Combinator < Node
     def initialize(comb)
       super(comb)
     end
@@ -72,10 +72,10 @@ module RazyK
   #
   # Pair has only two child node (car and cdr).
   #  It represent term of combinators or terms.
-  class Pair < DAGNode
+  class Pair < Node
     def initialize(car, cdr)
-      car = Combinator.new(car) unless car.is_a?(DAGNode)
-      cdr = Combinator.new(cdr) unless cdr.is_a?(DAGNode)
+      car = Combinator.new(car) unless car.is_a?(Node)
+      cdr = Combinator.new(cdr) unless cdr.is_a?(Node)
       super(:Pair, [], [car, cdr])
       @car = car
       @cdr = cdr

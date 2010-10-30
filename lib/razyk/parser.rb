@@ -7,7 +7,7 @@
 require 'racc/parser.rb'
 
 
-require "razyk/dag"
+require "razyk/node"
 
 module RazyK
   class Parser < Racc::Parser

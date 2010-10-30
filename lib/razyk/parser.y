@@ -99,7 +99,7 @@ end
 
 ---- header
 
-require "razyk/dag"
+require "razyk/node"
 
 ---- inner
 

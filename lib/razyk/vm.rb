@@ -6,12 +6,12 @@ if not(defined?(Enumerator)) and defined?(Enumerable::Enumerator)
   Enumerator = Enumerable::Enumerator
 end
 
-require "razyk/dag"
+require "razyk/node"
 
 module RazyK
   class VM
     def initialize(tree, input=$stdin, output=$stdout)
-      @root = DAGNode.new(:root, [], [tree])
+      @root = Node.new(:root, [], [tree])
       @generator = nil
       @input = input
       @output = output

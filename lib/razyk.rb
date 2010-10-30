@@ -1,5 +1,5 @@
 
-require "razyk/dag"
+require "razyk/node"
 require "razyk/parser"
 require "razyk/vm"
 require "razyk/graph"

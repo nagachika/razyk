@@ -2,7 +2,7 @@
 
 require_relative "spec_helper"
 
-require "razyk/dag"
+require "razyk/node"
 
 include RazyK
 
