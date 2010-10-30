@@ -21,10 +21,6 @@ module RazyK
       @root.to[0]
     end
 
-    def integer_combinator(num)
-      Combinator.new(:"<#{num}>")
-    end
-
     def evaluate(root, gen=nil)
       stack = [root]
       until step(stack, gen).nil?
@@ -67,11 +63,11 @@ module RazyK
         new_pair = Pair.new(Pair.new(x, z), Pair.new(y, z))
         root.replace(new_pair)
         stack.push(new_pair)
-      when /<(\d+)>/
+      when Integer
         # (<N> f x) -> x               (N == 0)
         #           -> (f (<N-1> f x)) (N > 0)
         return nil if stack.size < 2
-        num = Regexp.last_match(1).to_i
+        num = comb.label
         x, f = stack.pop(2)
         root = x
         x = x.cut_cdr
@@ -80,13 +76,13 @@ module RazyK
           root.replace(x)
           stack.push(x)
         else
-          if f.label == :INC and /<(\d+)>/ =~ x.label
-            x_num = Regexp.last_match(1).to_i
-            x = integer_combinator(num + x_num)
+          if f.label == :INC and x.label.is_a?(Integer)
+            x_num = x.label
+            x = Combinator.new(num + x_num)
             root.replace(x)
             stack.push(x)
           else
-            dec_pair = Pair.new(integer_combinator(num-1), f)
+            dec_pair = Pair.new(Combinator.new(num-1), f)
             new_pair = Pair.new(f, Pair.new(dec_pair, x))
             root.replace(new_pair)
             stack.push(new_pair)
@@ -111,7 +107,7 @@ module RazyK
         else
           ch = ch.ord
         end
-        new_root = Pair.new(Pair.new(:CONS, integer_combinator(ch)),
+        new_root = Pair.new(Pair.new(:CONS, Combinator.new(ch)),
                             :DUMMY) # reuse :INPUT combinator
         comb.replace(new_root)
         new_root.cdr = comb
@@ -148,7 +144,7 @@ module RazyK
                          Pair.new(
                            Pair.new(Combinator.new(:CAR), f),
                            Combinator.new(:INC)),
-                         integer_combinator(0))),
+                         Combinator.new(0))),
                      Pair.new(comb, # reuse :INPUT combinator
                               Pair.new(Combinator.new(:CDR), f)))
         root.replace(new_root)
@@ -159,20 +155,20 @@ module RazyK
         root = stack.pop
         evaluate(root.cdr, gen)
         n = root.cut_cdr
-        unless /<(\d+)>/ =~ n.label
+        unless n.label.is_a?(Integer)
           raise "argument of INC combinator is not a church number"
         end
-        num = Regexp.last_match(1).to_i
-        root.replace(integer_combinator(num+1))
+        num = n.label
+        root.replace(Combinator.new(num+1))
       when :PUTC
         # (PUTC x y) -> y : evaluate x and putchar it
         return nil if stack.size < 2
         x = stack.pop
         evaluate(x.cdr, gen)
-        unless x.cdr.label =~ /<(\d+)>/
+        unless x.cdr.label.is_a?(Integer)
           raise "output is not church number"
         end
-        num = Regexp.last_match(1).to_i
+        num = x.cdr.label
         if num >= 256
           return nil
         end
