@@ -102,13 +102,13 @@ describe VM do
     input = Combinator.new(:INPUT)
     cdr = Combinator.new(:CDR)
     root = Pair.new(cdr, input)
-    buf = StringIO.new([100, 200].pack("C"))
+    buf = StringIO.new([100, 200].pack("C*"))
     vm = VM.new(root, buf)
     vm.evaluate(vm.tree)
-    vm.tree.should be_is_a(Combinator)
-    vm.tree.label == :INPUT
+    vm.tree.should be_is_a(Pair)
+    vm.tree.cdr.label == :INPUT
     vm.tree.from.size.should == 1
-    buf.pos.should == 1
+    buf.pos.should == 2
   end
 
   it "should reduce PUTC combinator" do

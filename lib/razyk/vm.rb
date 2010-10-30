@@ -10,6 +10,8 @@ require "razyk/node"
 
 module RazyK
   class VM
+    class StackUnderflow < StandardError; end
+
     def initialize(tree, input=$stdin, output=$stdout)
       @root = Node.new(:root, [], [tree])
       @generator = nil
@@ -19,6 +21,36 @@ module RazyK
 
     def tree
       @root.to[0]
+    end
+
+    # Pop num of Pairs nodes from stack.
+    # Each Pair node is destroyed if it isn't referenced from other parent node
+    # Return value is [<root Pair node for replace>, cdr1, cdr2, ...]
+    def pop_pairs(stack, num)
+      raise StackUnderflow if stack.size < num
+      pairs = stack.pop(num)
+      root = pairs.first
+      root.cut_car if num <= 1
+      cdrs = [ root.cut_cdr ]
+      shared = false
+      pairs.inject do |parent, child|
+        parent.cut_car unless shared
+        if child.from.size != 0
+          shared = true
+          cdrs.unshift(child.cdr)
+        else
+          cdrs.unshift(child.cut_cdr)
+        end
+        child
+      end
+      cdrs.unshift(root)
+      cdrs
+    end
+
+    # replace old_root Pair with new_root Pair and push new_root to stack
+    def replace_root(stack, old_root, new_root)
+      old_root.replace(new_root)
+      stack.push(new_root)
     end
 
     def evaluate(root, gen=nil)
@@ -39,68 +71,41 @@ module RazyK
       case comb.label
       when :I
         # (I x) -> x
-        return nil if stack.empty?
-        x = stack.pop
-        xcdr = x.cut_cdr
-        x.replace(xcdr)
-        stack.push(xcdr)
+        root, x = pop_pairs(stack, 1)
+        replace_root(stack, root, x)
       when :K
         # (K x y) -> x
-        return nil if stack.size < 2
-        y, x = stack.pop(2)
-        x = x.cut_cdr
-        y.replace(x)
-        stack.push(x)
+        root, x, y = pop_pairs(stack, 2)
+        replace_root(stack, root, x)
       when :S
         # (S x y z) -> ((x z) (y z))
-        return nil if stack.size < 3
-        z, y, x = stack.pop(3)
-        # cut from parent
-        root = z
-        x = x.cut_cdr
-        y = y.cut_cdr
-        z = z.cut_cdr
+        root, x, y, z = pop_pairs(stack, 3)
         new_pair = Pair.new(Pair.new(x, z), Pair.new(y, z))
-        root.replace(new_pair)
-        stack.push(new_pair)
+        replace_root(stack, root, new_pair)
       when Integer
         # (<N> f x) -> x               (N == 0)
         #           -> (f (<N-1> f x)) (N > 0)
-        return nil if stack.size < 2
+        root, f, x = pop_pairs(stack, 2)
         num = comb.label
-        x, f = stack.pop(2)
-        root = x
-        x = x.cut_cdr
-        f = f.cut_cdr
         if num == 0
-          root.replace(x)
-          stack.push(x)
+          replace_root(stack, root, x)
         else
+          # shortcut
           if f.label == :INC and x.label.is_a?(Integer)
-            x_num = x.label
-            x = Combinator.new(num + x_num)
-            root.replace(x)
-            stack.push(x)
+            replace_root(stack, root, Combinator.new(num + x.label))
           else
             dec_pair = Pair.new(Combinator.new(num-1), f)
-            new_pair = Pair.new(f, Pair.new(dec_pair, x))
-            root.replace(new_pair)
-            stack.push(new_pair)
+            new_root = Pair.new(f, Pair.new(dec_pair, x))
+            replace_root(stack, root, new_root)
           end
         end
       when :CONS
         # (CONS a d f) -> (f a d)
-        return nil if stack.size < 3
-        f, d, a = stack.pop(3)
-        root = f
-        f = f.cdr
-        new_root = Pair.new(Pair.new(f, a.cdr),
-                            d.cdr)
-        root.replace(new_root)
-        stack.push(new_root)
+        root, a, d, f = pop_pairs(stack, 3)
+        new_root = Pair.new(Pair.new(f, a), d)
+        replace_root(stack, root, new_root)
       when :INPUT
         # (IN f) -> (CONS <CH> IN f) where <CH> is a byte from stdin
-        return nil if stack.size < 1
         ch = @input.read(1)
         if ch.nil?
           ch = 256
@@ -114,52 +119,31 @@ module RazyK
         stack.push(new_root)
       when :CAR
         # (CAR x) -> (x K)       (CAR = (Lx.x TRUE), TRUE = (Lxy.x) = K)
-        return nil if stack.size < 1
-        x = stack.pop
-        root = x
-        x = x.cut_cdr
+        root, x = pop_pairs(stack, 1)
         new_root = Pair.new(x, :K)  # K means TRUE
-        root.replace(new_root)
-        stack.push(new_root)
+        replace_root(stack, root, new_root)
       when :CDR
         # (CDR x) -> (x (K I))  (CDR = (Lx.x FALSE), FALSE = (Lxy.y) = (K I)
-        return nil if stack.size < 1
-        x = stack.pop
-        root = x
-        x = x.cut_cdr
+        root, x = pop_pairs(stack, 1)
         new_root = Pair.new(x, Pair.new(:K, :I)) # (K I) means FALSE
-        root.replace(new_root)
-        stack.push(new_root)
+        replace_root(stack, root, new_root)
       when :OUTPUT
         # (OUTPUT f) -> ((PUTC ((CAR f) INC <0>) (OUTPUT (CDR f)))
-        return nil if stack.size < 1
-        f = stack.pop
-        root = f
-        f = f.cut_cdr
-        root.cut_car
+        root, f = pop_pairs(stack, 1)
         new_root = Pair.new(
-                     Pair.new(
-                       Combinator.new(:PUTC),
-                       Pair.new(
-                         Pair.new(
-                           Pair.new(Combinator.new(:CAR), f),
-                           Combinator.new(:INC)),
-                         Combinator.new(0))),
-                     Pair.new(comb, # reuse :INPUT combinator
-                              Pair.new(Combinator.new(:CDR), f)))
-        root.replace(new_root)
-        stack.push(new_root)
+                     Pair.new(:PUTC,
+                       Pair.new(Pair.new(Pair.new(:CAR, f), :INC), 0)),
+                     Pair.new(comb, # reuse :OUTPUT combinator
+                              Pair.new(:CDR, f)))
+        replace_root(stack, root, new_root)
       when :INC
         # (INC n) -> n+1 : increment church number
-        return nil if stack.size < 1
-        root = stack.pop
-        evaluate(root.cdr, gen)
-        n = root.cut_cdr
+        root, n = pop_pairs(stack, 1)
+        evaluate(n, gen)
         unless n.label.is_a?(Integer)
           raise "argument of INC combinator is not a church number"
         end
-        num = n.label
-        root.replace(Combinator.new(num+1))
+        replace_root(stack, root, Combinator.new(n.label + 1))
       when :PUTC
         # (PUTC x y) -> y : evaluate x and putchar it
         return nil if stack.size < 2
@@ -175,10 +159,11 @@ module RazyK
         @output.write([num].pack("C"))
         root = stack.pop
         y = root.cut_cdr
-        root.replace(y)
-        stack.push(y)
+        replace_root(stack, root, y)
       end
       true
+    rescue StackUnderflow
+      return nil
     end
 
     def reduce
