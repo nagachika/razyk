@@ -58,7 +58,7 @@ if defined?(GraphViz)
       end
       module_function :graph
 
-      def tree2svg(tree, file)
+      def tree2svg(tree, file=nil)
         graph(tree).output(:svg => file)
       end
     end
