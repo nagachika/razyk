@@ -1,0 +1,50 @@
+#!/usr/bin/env ruby
+
+require "razyk"
+require "optparse"
+
+module RazyK
+  class Application
+    def initialize
+      @program = nil
+      @step = false
+      @optparse = option_parser
+    end
+
+    def option_parser
+      OptionParser.new do |opt|
+        opt.on("-e 'program'",
+               "specify LazyK program string. Omit [programfile]") do |prog|
+          @program = prog
+        end
+        opt.on("-s", "--step", "step execution. Dump combinator tree by each step") do
+          @step = true
+        end
+      end
+    end
+    private :option_parser
+
+    def run(argv)
+      @optparse.parse!(argv)
+
+      if @program.nil?
+        if argv.empty?
+          raise "please specify LazyK program file"
+        end
+        filepath = argv.shift
+        @program = IO.read(filepath)
+      end
+
+      if @step
+        RazyK.run(@program) do |vm|
+          $stderr.puts vm.tree.inspect
+        end
+      else
+        RazyK.run(@program)
+      end
+    end
+  end
+end
+
+app = RazyK::Application.new
+app.run(ARGV)
