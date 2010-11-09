@@ -2,7 +2,6 @@
 require "razyk/node"
 require "razyk/parser"
 require "razyk/vm"
-require "razyk/graph"
 
 module RazyK
   def self.run(program, opt={}, &blk)
