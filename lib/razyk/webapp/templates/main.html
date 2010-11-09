@@ -1,0 +1,43 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html>
+<head>
+  <title>RazyK</title>
+  <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.3.2/jquery.min.js"></script>
+  <script type="text/javascript">
+    function update() {
+      $("#expression").load("/expression");
+      $("#graph").attr("src", "/graph")
+    }
+    function set_program() {
+      $.post("/set_program", { program: $("#program").val() },
+             function() {
+               update();
+             }, "json");
+    }
+
+    function step() {
+      $.get("/step", {},
+            function() {
+               update();
+            });
+    }
+  </script>
+</head>
+<body>
+  <p><div>enter program</div>
+  <textarea id="program" cols="100">skki</textarea>
+  </p>
+  <p>
+  <input type="button" value="set program" onclick="set_program()" />
+  <input type="button" value="step" onclick="step()" />
+  </p>
+  <p>
+    <div>combinator expression</div>
+    <div id="expression"> </div>
+  </p>
+  <p>graph expression</p>
+  <iframe id="graph" height="1000" width="100%">
+    using iframe.
+  </iframe>
+</body>
+</html>

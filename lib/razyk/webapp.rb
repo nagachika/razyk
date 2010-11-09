@@ -1,0 +1,119 @@
+
+require "rack"
+require "tempfile"
+
+require "razyk/graph"
+
+module RazyK
+  class WebApp
+    def initialize
+      reset
+    end
+
+    def reset
+      @vm = nil
+      @graph = 0
+      @step = 0
+      @port_in = StringIO.new
+      @port_out = StringIO.new
+    end
+
+    def template(name)
+      File.join(File.dirname(File.expand_path(__FILE__)), "webapp", "templates", name)
+    end
+
+    def main_page(req)
+      reset
+      res = Rack::Response.new
+      res.status = 200
+      res.write File.read(template("main.html"))
+      res
+    end
+
+    def not_found(req)
+      res = Rack::Response.new
+      res.status = 404
+      res.write(<<-EOF)
+        <html><head><title>#{req.path} is not found</title></head>
+        <body>#{req.path} is not found</body></html>
+      EOF
+      res
+    end
+
+    def set_program(req)
+      res = Rack::Response.new
+      begin
+        tree = RazyK::Parser.parse(req.params["program"])
+        #root = Pair.new(:OUTPUT, Pair.new(tree, :INPUT))
+        root = tree
+        @vm = VM.new(root, @port_in, @port_out)
+      rescue
+        res.status = 501
+        puts $!.message, $@
+        return res
+      end
+      res.header["Content-Type"] = "text/json"
+      res.write('{"status":"success"}')
+      res
+    end
+
+    def step(req)
+      res = Rack::Response.new
+      res.header["Content-Type"] = "text/plain"
+      if @vm
+        if @vm.reduce
+          @step += 1
+        end
+        res.write("OK")
+      else
+        res.write("enter program first")
+      end
+      res
+    end
+
+    def expression(req)
+      res = Rack::Response.new
+      res.header["Content-Type"] = "text/plain"
+      if @vm
+        res.write(@vm.tree.inspect)
+      else
+        res.write("enter program first")
+      end
+      res
+    end
+
+    def graph(req)
+      res = Rack::Response.new
+      if @vm
+        res.header["Content-Type"] = "image/svg+xml"
+        tmpfile = Tempfile.new("razyk_graph")
+        RazyK::Graph.graph(@vm.tree, :style => :dag).output(:svg => tmpfile.path)
+        res.write(tmpfile.read)
+        tmpfile.unlink
+      else
+        res.header["Content-Type"] = "text/plain"
+        res.write("enter program first")
+      end
+      res
+    end
+
+    def call(env)
+      req = Rack::Request.new(env)
+      case req.path
+      when "/"
+        res = main_page(req)
+      when "/set_program"
+        res = set_program(req)
+      when "/step"
+        res = step(req)
+      when "/expression"
+        res = expression(req)
+      when "/graph"
+        res = graph(req)
+      else
+        res = not_found(req)
+      end
+      res.finish
+    end
+  end
+end

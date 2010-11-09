@@ -8,6 +8,7 @@ module RazyK
     def initialize
       @program = nil
       @step = false
+      @web_server = false
       @optparse = option_parser
     end
 
@@ -20,12 +21,33 @@ module RazyK
         opt.on("-s", "--step", "step execution. Dump combinator tree by each step") do
           @step = true
         end
+        opt.on("--server [PORT]", "start web server") do |port|
+          @port = Integer(port || 9292)
+          @step = true
+          @web_server = true
+        end
       end
     end
     private :option_parser
 
     def run(argv)
       @optparse.parse!(argv)
+
+      if @web_server
+        require "razyk/webapp"
+        app = RazyK::WebApp.new
+        # This should work, but rack-1.2.1 fails. :app don't overwrite config.ru
+        #Rack::Server.start(:app => app, :Port => @port)
+        trap(:INT) do
+          if Rack::Handler::WEBrick.respond_to?(:shutdown)
+            Rack::Handler::WEBrick.shutdown
+          else
+            exit
+          end
+        end
+        Rack::Handler::WEBrick.run(app, :Port => @port)
+        return
+      end
 
       if @program.nil?
         if argv.empty?
