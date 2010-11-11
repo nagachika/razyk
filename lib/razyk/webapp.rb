@@ -1,6 +1,7 @@
 
 require "rack"
 require "tempfile"
+require "thread"
 
 require "razyk/graph"
 
@@ -14,8 +15,10 @@ module RazyK
       @vm = nil
       @graph = 0
       @step = 0
+      @thread = nil
       @port_in = StringIO.new
       @port_out = StringIO.new
+      @queue = Queue.new
     end
 
     def template(name)
@@ -40,13 +43,26 @@ module RazyK
       res
     end
 
+    def reduce_thread(vm)
+      while q = @queue.pop
+        q.push(vm.reduce)
+      end
+    end
+
     def set_program(req)
       res = Rack::Response.new
       begin
         tree = RazyK::Parser.parse(req.params["program"])
         #root = Pair.new(:OUTPUT, Pair.new(tree, :INPUT))
         root = tree
+        # discard previous vm and thread
+        if @thread
+          @thread.kill
+          @thread = nil
+        end
         @vm = VM.new(root, @port_in, @port_out)
+        # start Thread for reduction
+        @thread = Thread.start do reduce_thread(@vm) end
       rescue
         res.status = 501
         puts $!.message, $@
@@ -60,8 +76,10 @@ module RazyK
     def step(req)
       res = Rack::Response.new
       res.header["Content-Type"] = "text/plain"
-      if @vm
-        if @vm.reduce
+      if @thread
+        rep = Queue.new
+        @queue.push(rep)
+        if rep.pop
           @step += 1
         end
         res.write("OK")
