@@ -21,6 +21,10 @@
                update();
             });
     }
+
+    function toggle_mode() {
+      alert($("#program_mode").value());
+    }
   </script>
 </head>
 <body>
@@ -28,8 +32,20 @@
   <textarea id="program" cols="100">skki</textarea>
   </p>
   <p>
+  <input type="checkbox" id="program_mode" onchange="toggle_mode();" />
+  <span>LazyK application mode</span>
+  </p>
+  <p>
   <input type="button" value="set program" onclick="set_program()" />
   <input type="button" value="step" onclick="step()" />
+  </p>
+  <p id="input_pane">
+    <div>stdin</div>
+    <textarea id="input_buffer" cols="100"></textarea>
+  </p>
+  <p id="output_pane">
+    <div>stdout</div>
+    <div id="output_buffer"></div>
   </p>
   <p>
     <div>combinator expression</div>
