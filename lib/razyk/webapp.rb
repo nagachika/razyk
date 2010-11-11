@@ -2,6 +2,7 @@
 require "rack"
 require "tempfile"
 require "thread"
+require "stringio"
 
 require "razyk/graph"
 
