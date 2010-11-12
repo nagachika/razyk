@@ -86,8 +86,8 @@ describe VM do
     b.from.size.should == 1
   end
 
-  it "should reduce INPUT combinator (CAR)" do
-    input = Combinator.new(:INPUT)
+  it "should reduce IN combinator (CAR)" do
+    input = Combinator.new(:IN)
     car = Combinator.new(:CAR)
     root = Pair.new(car, input)
     buf = StringIO.new([100, 200].pack("C"))
@@ -98,15 +98,15 @@ describe VM do
     buf.pos.should == 1
   end
 
-  it "should reduce INPUT combinator (CDR)" do
-    input = Combinator.new(:INPUT)
+  it "should reduce IN combinator (CDR)" do
+    input = Combinator.new(:IN)
     cdr = Combinator.new(:CDR)
     root = Pair.new(cdr, input)
     buf = StringIO.new([100, 200].pack("C*"))
     vm = VM.new(root, buf)
     vm.evaluate(vm.tree)
     vm.tree.should be_is_a(Pair)
-    vm.tree.cdr.label == :INPUT
+    vm.tree.cdr.label == :IN
     vm.tree.from.size.should == 1
     buf.pos.should == 2
   end

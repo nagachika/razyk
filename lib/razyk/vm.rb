@@ -109,7 +109,7 @@ module RazyK
         root, a, d, f = pop_pairs(stack, 3)
         new_root = Pair.new(Pair.new(f, a), d)
         replace_root(stack, root, new_root)
-      when :INPUT
+      when :IN
         # (IN f) -> (CONS <CH> IN f) where <CH> is a byte from stdin
         ch = @input.read(1)
         if ch.nil?
@@ -118,7 +118,7 @@ module RazyK
           ch = ch.ord
         end
         new_root = Pair.new(Pair.new(:CONS, Combinator.new(ch)),
-                            :DUMMY) # reuse :INPUT combinator
+                            :DUMMY) # reuse :IN combinator
         comb.replace(new_root)
         new_root.cdr = comb
         stack.push(new_root)
@@ -132,13 +132,13 @@ module RazyK
         root, x = pop_pairs(stack, 1)
         new_root = Pair.new(x, Pair.new(:K, :I)) # (K I) means FALSE
         replace_root(stack, root, new_root)
-      when :OUTPUT
+      when :OUT
         # (OUTPUT f) -> ((PUTC ((CAR f) INC <0>) (OUTPUT (CDR f)))
         root, f = pop_pairs(stack, 1)
         new_root = Pair.new(
                      Pair.new(:PUTC,
                        Pair.new(Pair.new(Pair.new(:CAR, f), :INC), 0)),
-                     Pair.new(comb, # reuse :OUTPUT combinator
+                     Pair.new(comb, # reuse :OUT combinator
                               Pair.new(:CDR, f)))
         replace_root(stack, root, new_root)
       when :INC

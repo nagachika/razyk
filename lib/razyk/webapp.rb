@@ -59,7 +59,7 @@ module RazyK
       begin
         tree = RazyK::Parser.parse(req.params["program"])
         if req.params["mode"] == "true"
-          root = Pair.new(:OUTPUT, Pair.new(tree, :INPUT))
+          root = Pair.new(:OUT, Pair.new(tree, :IN))
           @port_in = StringIO.new(req.params["stdin"] || "")
           recursive = false
         else
