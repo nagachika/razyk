@@ -23,7 +23,7 @@
              }, "json");
     }
 
-    function step() {
+    function step_reduction() {
       $.get("/step", {},
             function() {
                update();
@@ -48,8 +48,8 @@
   <span>LazyK application mode</span>
   </p>
   <p>
-  <input type="button" value="set program" onclick="set_program()" />
-  <input type="button" value="step" onclick="step()" />
+  <input type="button" value="set program" onclick="set_program();" />
+  <input type="button" value="step" onclick="step_reduction();" />
   </p>
   <span id="inout_pane" style="display: none">
     <div>stdin</div>
