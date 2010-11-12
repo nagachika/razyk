@@ -46,7 +46,11 @@ module RazyK
 
     def reduce_thread(vm)
       while q = @queue.pop
-        q.push(vm.reduce)
+        begin
+          q.push(vm.reduce)
+        rescue
+          q.push($!)
+        end
       end
     end
 
@@ -86,7 +90,11 @@ module RazyK
       if @thread
         rep = Queue.new
         @queue.push(rep)
-        if rep.pop
+        ret = rep.pop
+        if ret.is_a?(Exception)
+          raise ret
+        end
+        if ret
           @step += 1
         end
         res.write("OK")
