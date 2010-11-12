@@ -12,11 +12,12 @@ module RazyK
   class VM
     class StackUnderflow < StandardError; end
 
-    def initialize(tree, input=$stdin, output=$stdout)
+    def initialize(tree, input=$stdin, output=$stdout, recursive=false)
       @root = Node.new(:root, [], [tree])
       @generator = nil
       @input = input
       @output = output
+      @recursive = recursive
     end
 
     def tree
@@ -60,6 +61,10 @@ module RazyK
           gen.yield(self)
         end
       end
+      if @recursive and stack.last.is_a?(Pair)
+        evaluate(stack.last.cdr, gen)
+      end
+      nil
     end
 
     def step(stack, gen=nil)
@@ -146,7 +151,7 @@ module RazyK
         replace_root(stack, root, Combinator.new(n.label + 1))
       when :PUTC
         # (PUTC x y) -> y : evaluate x and putchar it
-        return nil if stack.size < 2
+        raise StackUnderflow if stack.size < 2
         x = stack.pop
         evaluate(x.cdr, gen)
         unless x.cdr.label.is_a?(Integer)

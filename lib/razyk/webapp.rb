@@ -57,15 +57,17 @@ module RazyK
         if req.params["mode"] == "true"
           root = Pair.new(:OUTPUT, Pair.new(tree, :INPUT))
           @port_in = StringIO.new(req.params["stdin"] || "")
+          recursive = false
         else
           root = tree
+          recursive = true
         end
         # discard previous vm and thread
         if @thread
           @thread.kill
           @thread = nil
         end
-        @vm = VM.new(root, @port_in, @port_out)
+        @vm = VM.new(root, @port_in, @port_out, recursive)
         # start Thread for reduction
         @thread = Thread.start do reduce_thread(@vm) end
       rescue
@@ -97,7 +99,7 @@ module RazyK
     def stdout(req)
       res = Rack::Response.new
       res.header["Content-Type"] = "text/plain"
-      res.write(@port_out.string)
+      res.write(@port_out.string.inspect)
       res
     end
 
