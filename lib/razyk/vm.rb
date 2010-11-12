@@ -143,10 +143,11 @@ module RazyK
         replace_root(stack, root, new_root)
       when :INC
         # (INC n) -> n+1 : increment church number
+        raise StackUnderflow if stack.empty?
+        evaluate(stack.last.cdr, gen)
         root, n = pop_pairs(stack, 1)
-        evaluate(n, gen)
         unless n.label.is_a?(Integer)
-          raise "argument of INC combinator is not a church number"
+          raise "argument of INC combinator is not a church number but #{n.inspect}"
         end
         replace_root(stack, root, Combinator.new(n.label + 1))
       when :PUTC
