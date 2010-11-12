@@ -54,8 +54,12 @@ module RazyK
       res = Rack::Response.new
       begin
         tree = RazyK::Parser.parse(req.params["program"])
-        #root = Pair.new(:OUTPUT, Pair.new(tree, :INPUT))
-        root = tree
+        if req.params["mode"] == "true"
+          root = Pair.new(:OUTPUT, Pair.new(tree, :INPUT))
+          @port_in = StringIO.new(req.params["stdin"] || "")
+        else
+          root = tree
+        end
         # discard previous vm and thread
         if @thread
           @thread.kill
@@ -87,6 +91,13 @@ module RazyK
       else
         res.write("enter program first")
       end
+      res
+    end
+
+    def stdout(req)
+      res = Rack::Response.new
+      res.header["Content-Type"] = "text/plain"
+      res.write(@port_out.string)
       res
     end
 
@@ -125,6 +136,8 @@ module RazyK
         res = set_program(req)
       when "/step"
         res = step(req)
+      when "/stdout"
+        res = stdout(req)
       when "/expression"
         res = expression(req)
       when "/graph"

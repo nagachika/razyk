@@ -5,11 +5,17 @@
   <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.3.2/jquery.min.js"></script>
   <script type="text/javascript">
     function update() {
+      $("#output_buffer").load("/stdout");
       $("#expression").load("/expression");
-      $("#graph").attr("src", "/graph")
+      $("#graph").attr("src", "/graph");
     }
     function set_program() {
-      $.post("/set_program", { program: $("#program").val() },
+      $.post("/set_program",
+             {
+               program: $("#program").val(),
+               mode: $("#program_mode").is(":checked"),
+               stdin: $("#input_buffer").val()
+             },
              function() {
                update();
              }, "json");
@@ -23,7 +29,11 @@
     }
 
     function toggle_mode() {
-      alert($("#program_mode").value());
+      if ($("#program_mode").is(":checked")) {
+        $("#inout_pane").show("fast");
+      } else {
+        $("#inout_pane").hide("fast");
+      }
     }
   </script>
 </head>
@@ -39,14 +49,12 @@
   <input type="button" value="set program" onclick="set_program()" />
   <input type="button" value="step" onclick="step()" />
   </p>
-  <p id="input_pane">
+  <span id="inout_pane" style="display: none">
     <div>stdin</div>
     <textarea id="input_buffer" cols="100"></textarea>
-  </p>
-  <p id="output_pane">
     <div>stdout</div>
     <div id="output_buffer"></div>
-  </p>
+  </span>
   <p>
     <div>combinator expression</div>
     <div id="expression"> </div>
