@@ -133,6 +133,8 @@ def scan
       [:RPAR, ch]
     when "0"
       [:ZERO, ch]
+    when "1"
+      [:ONE, ch]
     end
     yield tok if tok
   end
