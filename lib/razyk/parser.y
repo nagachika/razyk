@@ -6,6 +6,7 @@ token BACKSLASH
 token ASTAR
 token LPAR RPAR
 token ZERO ONE
+token LITERAL
 
 start program
 
@@ -83,6 +84,10 @@ expr2   :   I
         {
           result = val[1]
         }
+        |   LITERAL
+        {
+          result = Combinator.new(val[0].to_sym)
+        }
         ;
 
 no_empty_jot_expr   :   ZERO jot_expr
@@ -105,16 +110,35 @@ require "razyk/node"
 
 def scan
   in_comment = false
+  in_literal = false
+  literal = []
+  @lineno = 1
   @buf.each_char do |ch|
-    if ch == "\n"
-      in_comment = false
+    @lineno += 1 if ch == "\n"
+    if in_comment
+      in_comment = false if ch == "\n"
       next
     end
-    next if in_comment
+    if in_literal
+      if /[\w.-]/ =~ ch
+        literal.push(ch)
+        next
+      else
+        raise "empty literal at line.#{@lineno}" if literal.empty?
+        name = literal.join
+        literal.clear
+        yield [:LITERAL, name]
+        in_literal = false
+        # down through
+      end
+    end
     tok = case ch
     when "#"
       in_comment = true
-      next
+      nil
+    when "$"
+      in_literal = true
+      nil
     when "I"
       [:I, ch]
     when "i"
@@ -137,6 +161,12 @@ def scan
       [:ONE, ch]
     end
     yield tok if tok
+  end
+  if in_literal and not literal.empty?
+    name = literal.join
+    literal.clear
+    yield [:LITERAL, name]
+    in_literal = false
   end
   yield [false, nil]
 end
