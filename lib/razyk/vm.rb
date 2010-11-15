@@ -85,8 +85,13 @@ module RazyK
       when :S
         # (S x y z) -> ((x z) (y z))
         root, x, y, z = pop_pairs(stack, 3)
-        new_pair = Pair.new(Pair.new(x, z), Pair.new(y, z))
-        replace_root(stack, root, new_pair)
+        new_root = Pair.new(Pair.new(x, z), Pair.new(y, z))
+        replace_root(stack, root, new_root)
+      when :IOTA
+        #  (IOTA x) -> ((x S) K)
+        root, x = pop_pairs(stack, 1)
+        new_root = Pair.new(Pair.new(x, :S), :K)
+        replace_root(stack, root, new_root)
       when Integer
         # (<N> f x) -> x               (N == 0)
         #           -> (f (<N-1> f x)) (N > 0)
@@ -147,7 +152,12 @@ module RazyK
         evaluate(stack.last.cdr, gen)
         root, n = pop_pairs(stack, 1)
         unless n.label.is_a?(Integer)
-          raise "argument of INC combinator is not a church number but #{n.inspect}"
+          begin
+            msg = "argument of INC combinator is not a church number but #{n.inspect}"
+          rescue
+            msg = "argument of INC combinator is not a church number (too large combinator tree)"
+          end
+          raise msg
         end
         replace_root(stack, root, Combinator.new(n.label + 1))
       when :PUTC
@@ -156,7 +166,12 @@ module RazyK
         x = stack.pop
         evaluate(x.cdr, gen)
         unless x.cdr.label.is_a?(Integer)
-          raise "output is not church number"
+          begin
+            msg = "output is not church number but #{x.cdr.inspect}"
+          rescue
+            msg = "output is not church number (too large combinator tree)"
+          end
+          raise msg
         end
         num = x.cdr.label
         if num >= 256
@@ -166,6 +181,8 @@ module RazyK
         root = stack.pop
         y = root.cut_cdr
         replace_root(stack, root, y)
+      else # unknown combinator... treat as combinator without enough arguments
+        raise StackUnderflow
       end
       true
     rescue StackUnderflow

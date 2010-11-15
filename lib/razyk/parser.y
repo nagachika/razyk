@@ -40,7 +40,7 @@ expr    :   SMALL_I
 
 iotaexpr:   SMALL_I
         {
-          result = Combinator.new(:Iota)
+          result = Combinator.new(:IOTA)
         }
         |   expr2
         ;
@@ -60,7 +60,7 @@ expr2   :   I
         |   no_empty_jot_expr
         {
           comb = Combinator.new(:I)
-          @jot.each do |i|
+          @jot.reverse_each do |i|
             case i
             when 0
               comb = Pair.new(Pair.new(comb, :S), :K)

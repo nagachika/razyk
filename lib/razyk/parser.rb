@@ -233,7 +233,7 @@ module_eval(<<'.,.,', 'parser.y', 35)
 
 module_eval(<<'.,.,', 'parser.y', 42)
   def _reduce_6(val, _values, result)
-              result = Combinator.new(:Iota)
+              result = Combinator.new(:IOTA)
         
     result
   end
@@ -268,7 +268,7 @@ module_eval(<<'.,.,', 'parser.y', 57)
 module_eval(<<'.,.,', 'parser.y', 61)
   def _reduce_11(val, _values, result)
               comb = Combinator.new(:I)
-          @jot.each do |i|
+          @jot.reverse_each do |i|
             case i
             when 0
               comb = Pair.new(Pair.new(comb, :S), :K)
