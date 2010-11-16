@@ -12,20 +12,29 @@ require "razyk/node"
 module RazyK
   class Parser < Racc::Parser
 
-module_eval(<<'...end parser.y/module_eval...', 'parser.y', 110)
+module_eval(<<'...end parser.y/module_eval...', 'parser.y', 114)
+
+def str2list(str)
+  # (K 256) means End-of-stream. RazyK String adopt it as null terminator
+  head = Pair.new(:K, 256)
+  str.unpack("C*").reverse_each do |ch|
+    head = Pair.new(Pair.new(:CONS, ch), head)
+  end
+  head
+end
 
 def scan
-  in_comment = false
-  in_literal = false
+  # state : EXPR/IN_COMMENT/IN_LIRETAL/IN_STRING/IN_STRING_ESC
+  state = :EXPR
   literal = []
   @lineno = 1
   @buf.each_char do |ch|
     @lineno += 1 if ch == "\n"
-    if in_comment
-      in_comment = false if ch == "\n"
+    case state
+    when :IN_COMMENT
+      state = :EXPR if ch == "\n"
       next
-    end
-    if in_literal
+    when :IN_LITERAL
       if /[\w.-]/ =~ ch
         literal.push(ch)
         next
@@ -34,16 +43,48 @@ def scan
         name = literal.join
         literal.clear
         yield [:LITERAL, name]
-        in_literal = false
-        # down through
+        state = :EXPR
+        # through down
       end
+    when :IN_STRING
+      if "\\" == ch
+        state = :IN_STRING_ESC
+      elsif '"' == ch
+        yield [:STRING, literal.join]
+        literal.clear
+        state = :EXPR
+      else
+        literal.push(ch)
+      end
+      next
+    when :IN_STRING_ESC
+      case ch
+      when "n"
+        literal.push("\n")
+      when "t"
+        literal.push("\t")
+      when "r"
+        literal.push("\r")
+      when "b"
+        literal.push("\b")
+      when "f"
+        literal.push("\f")
+      else
+        literal.push(ch)
+      end
+      state = :IN_STRING
+      next
     end
+
     tok = case ch
     when "#"
-      in_comment = true
+      state = :IN_COMMENT
       nil
     when "$"
-      in_literal = true
+      state = :IN_LITERAL
+      nil
+    when "\""
+      state = :IN_STRING
       nil
     when "I"
       [:I, ch]
@@ -68,11 +109,11 @@ def scan
     end
     yield tok if tok
   end
-  if in_literal and not literal.empty?
+  if state == :IN_LITERAL and not literal.empty?
     name = literal.join
     literal.clear
     yield [:LITERAL, name]
-    in_literal = false
+    state = :EXPR
   end
   yield [false, nil]
 end
@@ -90,72 +131,75 @@ end
 ##### State transition tables begin ###
 
 racc_action_table = [
-     7,     8,     9,     5,    11,    12,    13,    28,    15,    16,
-    14,     7,     8,     9,     5,    11,    12,    13,    17,    15,
-    16,    14,     7,     8,     9,    19,    11,    12,    13,     3,
-    15,    16,    14,     7,     8,     9,     5,    11,    12,    13,
-   nil,    15,    16,    14,     7,     8,     9,    19,    11,    12,
-    13,   nil,    15,    16,    14,     7,     8,     9,     5,    11,
-    12,    13,   nil,    15,    16,    14,    15,    16,    15,    16 ]
+     7,     8,     9,     5,    11,    12,    13,    29,    16,    17,
+    14,    15,     7,     8,     9,     5,    11,    12,    13,    18,
+    16,    17,    14,    15,     7,     8,     9,    20,    11,    12,
+    13,     3,    16,    17,    14,    15,     7,     8,     9,     5,
+    11,    12,    13,   nil,    16,    17,    14,    15,     7,     8,
+     9,    20,    11,    12,    13,   nil,    16,    17,    14,    15,
+     7,     8,     9,     5,    11,    12,    13,   nil,    16,    17,
+    14,    15,    16,    17,    16,    17 ]
 
 racc_action_check = [
-    22,    22,    22,    22,    22,    22,    22,    22,    22,    22,
-    22,     2,     2,     2,     2,     2,     2,     2,     3,     2,
-     2,     2,    21,    21,    21,    21,    21,    21,    21,     1,
-    21,    21,    21,    18,    18,    18,    18,    18,    18,    18,
-   nil,    18,    18,    18,    12,    12,    12,    12,    12,    12,
-    12,   nil,    12,    12,    12,    11,    11,    11,    11,    11,
-    11,    11,   nil,    11,    11,    11,    16,    16,    15,    15 ]
+    23,    23,    23,    23,    23,    23,    23,    23,    23,    23,
+    23,    23,     2,     2,     2,     2,     2,     2,     2,     3,
+     2,     2,     2,     2,    22,    22,    22,    22,    22,    22,
+    22,     1,    22,    22,    22,    22,    19,    19,    19,    19,
+    19,    19,    19,   nil,    19,    19,    19,    19,    12,    12,
+    12,    12,    12,    12,    12,   nil,    12,    12,    12,    12,
+    11,    11,    11,    11,    11,    11,    11,   nil,    11,    11,
+    11,    11,    17,    17,    16,    16 ]
 
 racc_action_pointer = [
-   nil,    29,     9,    18,   nil,   nil,   nil,   nil,   nil,   nil,
-   nil,    53,    42,   nil,   nil,    58,    56,   nil,    31,   nil,
-   nil,    20,    -2,   nil,   nil,   nil,   nil,   nil,   nil ]
+   nil,    31,    10,    19,   nil,   nil,   nil,   nil,   nil,   nil,
+   nil,    58,    46,   nil,   nil,   nil,    64,    62,   nil,    34,
+   nil,   nil,    22,    -2,   nil,   nil,   nil,   nil,   nil,   nil ]
 
 racc_action_default = [
-    -2,   -20,    -1,   -20,    -3,    -4,    -5,    -8,    -9,   -10,
-   -11,   -20,   -20,    -2,   -15,   -19,   -19,    29,   -20,    -6,
-    -7,   -20,   -20,   -16,   -18,   -17,   -12,   -13,   -14 ]
+    -2,   -21,    -1,   -21,    -3,    -4,    -5,    -8,    -9,   -10,
+   -11,   -21,   -21,    -2,   -15,   -16,   -20,   -20,    30,   -21,
+    -6,    -7,   -21,   -21,   -17,   -19,   -18,   -12,   -13,   -14 ]
 
 racc_goto_table = [
-     2,    20,    21,    24,    24,    18,    23,    25,     1,   nil,
-    20,    27,    26,    22 ]
+     2,    21,    22,    25,    25,     1,    19,    24,    26,   nil,
+   nil,    21,    28,    23,    27 ]
 
 racc_goto_check = [
-     2,     4,     5,     6,     6,     3,     7,     7,     1,   nil,
-     4,     5,     3,     2 ]
+     2,     4,     5,     6,     6,     1,     3,     7,     7,   nil,
+   nil,     4,     5,     2,     3 ]
 
 racc_goto_pointer = [
-   nil,     8,     0,    -6,   -11,   -10,   -12,    -9 ]
+   nil,     5,     0,    -5,   -11,   -10,   -13,    -9 ]
 
 racc_goto_default = [
    nil,   nil,   nil,     4,     6,   nil,    10,   nil ]
 
 racc_reduce_table = [
   0, 0, :racc_error,
-  1, 14, :_reduce_1,
-  0, 15, :_reduce_2,
-  2, 15, :_reduce_3,
-  1, 16, :_reduce_4,
-  1, 16, :_reduce_none,
-  1, 18, :_reduce_6,
-  1, 18, :_reduce_none,
-  1, 17, :_reduce_8,
-  1, 17, :_reduce_9,
-  1, 17, :_reduce_10,
-  1, 17, :_reduce_11,
-  3, 17, :_reduce_12,
-  3, 17, :_reduce_13,
-  3, 17, :_reduce_14,
-  1, 17, :_reduce_15,
-  2, 19, :_reduce_16,
-  2, 19, :_reduce_17,
-  1, 20, :_reduce_none,
-  0, 20, :_reduce_none ]
+  1, 15, :_reduce_1,
+  0, 16, :_reduce_2,
+  2, 16, :_reduce_3,
+  1, 17, :_reduce_4,
+  1, 17, :_reduce_none,
+  1, 19, :_reduce_6,
+  1, 19, :_reduce_none,
+  1, 18, :_reduce_8,
+  1, 18, :_reduce_9,
+  1, 18, :_reduce_10,
+  1, 18, :_reduce_11,
+  3, 18, :_reduce_12,
+  3, 18, :_reduce_13,
+  3, 18, :_reduce_14,
+  1, 18, :_reduce_15,
+  1, 18, :_reduce_16,
+  2, 20, :_reduce_17,
+  2, 20, :_reduce_18,
+  1, 21, :_reduce_none,
+  0, 21, :_reduce_none ]
 
-racc_reduce_n = 20
+racc_reduce_n = 21
 
-racc_shift_n = 29
+racc_shift_n = 30
 
 racc_token_table = {
   false => 0,
@@ -170,9 +214,10 @@ racc_token_table = {
   :RPAR => 9,
   :ZERO => 10,
   :ONE => 11,
-  :LITERAL => 12 }
+  :LITERAL => 12,
+  :STRING => 13 }
 
-racc_nt_base = 13
+racc_nt_base = 14
 
 racc_use_result_var = true
 
@@ -206,6 +251,7 @@ Racc_token_to_s_table = [
   "ZERO",
   "ONE",
   "LITERAL",
+  "STRING",
   "$start",
   "program",
   "ccexpr",
@@ -343,23 +389,31 @@ module_eval(<<'.,.,', 'parser.y', 88)
   end
 .,.,
 
-module_eval(<<'.,.,', 'parser.y', 93)
+module_eval(<<'.,.,', 'parser.y', 92)
   def _reduce_16(val, _values, result)
+              result = str2list(val[0])
+        
+    result
+  end
+.,.,
+
+module_eval(<<'.,.,', 'parser.y', 97)
+  def _reduce_17(val, _values, result)
      @jot.push(0) 
     result
   end
 .,.,
 
-module_eval(<<'.,.,', 'parser.y', 95)
-  def _reduce_17(val, _values, result)
+module_eval(<<'.,.,', 'parser.y', 99)
+  def _reduce_18(val, _values, result)
      @jot.push(1) 
     result
   end
 .,.,
 
-# reduce 18 omitted
-
 # reduce 19 omitted
+
+# reduce 20 omitted
 
 def _reduce_none(val, _values, result)
   val[0]

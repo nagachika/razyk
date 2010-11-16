@@ -6,7 +6,7 @@ token BACKSLASH
 token ASTAR
 token LPAR RPAR
 token ZERO ONE
-token LITERAL
+token LITERAL STRING
 
 start program
 
@@ -88,6 +88,10 @@ expr2   :   I
         {
           result = Combinator.new(val[0].to_sym)
         }
+        | STRING
+        {
+          result = str2list(val[0])
+        }
         ;
 
 no_empty_jot_expr   :   ZERO jot_expr
@@ -108,18 +112,27 @@ require "razyk/node"
 
 ---- inner
 
+def str2list(str)
+  # (K 256) means End-of-stream. RazyK String adopt it as null terminator
+  head = Pair.new(:K, 256)
+  str.unpack("C*").reverse_each do |ch|
+    head = Pair.new(Pair.new(:CONS, ch), head)
+  end
+  head
+end
+
 def scan
-  in_comment = false
-  in_literal = false
+  # state : EXPR/IN_COMMENT/IN_LIRETAL/IN_STRING/IN_STRING_ESC
+  state = :EXPR
   literal = []
   @lineno = 1
   @buf.each_char do |ch|
     @lineno += 1 if ch == "\n"
-    if in_comment
-      in_comment = false if ch == "\n"
+    case state
+    when :IN_COMMENT
+      state = :EXPR if ch == "\n"
       next
-    end
-    if in_literal
+    when :IN_LITERAL
       if /[\w.-]/ =~ ch
         literal.push(ch)
         next
@@ -128,16 +141,48 @@ def scan
         name = literal.join
         literal.clear
         yield [:LITERAL, name]
-        in_literal = false
-        # down through
+        state = :EXPR
+        # through down
       end
+    when :IN_STRING
+      if "\\" == ch
+        state = :IN_STRING_ESC
+      elsif '"' == ch
+        yield [:STRING, literal.join]
+        literal.clear
+        state = :EXPR
+      else
+        literal.push(ch)
+      end
+      next
+    when :IN_STRING_ESC
+      case ch
+      when "n"
+        literal.push("\n")
+      when "t"
+        literal.push("\t")
+      when "r"
+        literal.push("\r")
+      when "b"
+        literal.push("\b")
+      when "f"
+        literal.push("\f")
+      else
+        literal.push(ch)
+      end
+      state = :IN_STRING
+      next
     end
+
     tok = case ch
     when "#"
-      in_comment = true
+      state = :IN_COMMENT
       nil
     when "$"
-      in_literal = true
+      state = :IN_LITERAL
+      nil
+    when "\""
+      state = :IN_STRING
       nil
     when "I"
       [:I, ch]
@@ -162,11 +207,11 @@ def scan
     end
     yield tok if tok
   end
-  if in_literal and not literal.empty?
+  if state == :IN_LITERAL and not literal.empty?
     name = literal.join
     literal.clear
     yield [:LITERAL, name]
-    in_literal = false
+    state = :EXPR
   end
   yield [false, nil]
 end
