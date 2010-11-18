@@ -11,6 +11,8 @@ begin
     gem.homepage = "http://github.com/nagachika/razyk"
     gem.authors = ["nagachika"]
     gem.add_development_dependency "rspec", ">= 1.2.9"
+    gem.add_dependency "rack"
+    gem.add_dependency "ruby-graphviz"
     # gem is a Gem::Specification... see http://www.rubygems.org/read/chapter/20 for additional settings
   end
   Jeweler::GemcutterTasks.new
