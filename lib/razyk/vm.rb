@@ -120,7 +120,7 @@ module RazyK
         if ch.nil?
           ch = 256
         else
-          ch = ch.ord
+          ch = ch.unpack("C")[0]
         end
         new_root = Pair.new(Pair.new(:CONS, Combinator.new(ch)),
                             :DUMMY) # reuse :IN combinator

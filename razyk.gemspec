@@ -9,7 +9,7 @@ Gem::Specification.new do |s|
 
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
   s.authors = ["nagachika"]
-  s.date = %q{2010-11-19}
+  s.date = %q{2010-11-20}
   s.default_executable = %q{razyk}
   s.description = %q{RazyK is a LazyK implementetion by pure ruby}
   s.email = %q{nagachika00@gmail.com}
@@ -39,6 +39,7 @@ Gem::Specification.new do |s|
     "lib/razyk/vm.rb",
     "lib/razyk/webapp.rb",
     "lib/razyk/webapp/templates/main.html",
+    "razyk.gemspec",
     "spec/node_spec.rb",
     "spec/spec_helper.rb",
     "spec/vm_spec.rb"
