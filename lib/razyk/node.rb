@@ -56,7 +56,19 @@ module RazyK
     end
 
     def integer?
-      @label.is_a?(Integer) or (/\A\d+\z/ =~ @label)
+      @label.is_a?(Integer) or (/\A\d+\z/ =~ @label.to_s)
+    end
+
+    def integer
+      unless integer?
+        raise "#{self} is not a integer"
+      end
+      case @label
+      when Integer
+        @label
+      else
+        Integer(@label.to_s)
+      end
     end
   end
 

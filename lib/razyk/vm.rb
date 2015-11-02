@@ -154,7 +154,7 @@ module RazyK
           end
           raise msg
         end
-        num = x.cdr.label
+        num = x.cdr.integer
         if num >= 256
           return nil
         end
@@ -167,13 +167,13 @@ module RazyK
           # (<N> f x) -> x               (N == 0)
           #           -> (f (<N-1> f x)) (N > 0)
           root, f, x = pop_pairs(stack, 2)
-          num = Integer(comb.label)
+          num = comb.integer
           if num == 0
             replace_root(stack, root, x)
           else
             # shortcut
             if f.label == :INC and x.integer?
-              replace_root(stack, root, Combinator.new(num + Integer(x.label)))
+              replace_root(stack, root, Combinator.new(num + x.integer))
             else
               dec_pair = Pair.new(Combinator.new(num-1), f)
               new_root = Pair.new(f, Pair.new(dec_pair, x))
