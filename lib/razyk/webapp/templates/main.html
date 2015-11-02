@@ -15,7 +15,8 @@
     function draw(razyk) {
       toggle_mode();
       if ($("#lazyk_mode").is(":checked")) {
-        $("#output_buffer").text(razyk.stdout);
+        $("#stdin_progress").text(razyk.stdin_read + "_" + razyk.stdin_remain);
+        $("#stdout").text(razyk.stdout);
       }
       $("#expression").text(razyk.expression);
     }
@@ -44,9 +45,9 @@
 
     function toggle_mode() {
       if ($("#lazyk_mode").is(":checked")) {
-        $("#inout_pane").show("fast");
+        $(".inout_pane").show("fast");
       } else {
-        $("#inout_pane").hide("fast");
+        $(".inout_pane").hide("fast");
       }
     }
   </script>
@@ -59,15 +60,19 @@
   <input type="checkbox" id="lazyk_mode" onchange="toggle_mode();" />
   <span>LazyK application mode</span>
   </p>
+  <span class="inout_pane" style="display: none">
+    <div>stdin</div>
+    <textarea id="input_buffer" cols="100"></textarea>
+  </span>
   <p>
   <input type="button" value="set program" onclick="set_program();" />
   <input type="button" value="step" onclick="reduce();" />
   </p>
-  <span id="inout_pane" style="display: none">
+  <span class="inout_pane" style="display: none">
     <div>stdin</div>
-    <textarea id="input_buffer" cols="100"></textarea>
+    <div id="stdin_progress"></div>
     <div>stdout</div>
-    <div id="output_buffer"></div>
+    <div id="stdout"></div>
   </span>
   <p>
     <div>combinator expression</div>
