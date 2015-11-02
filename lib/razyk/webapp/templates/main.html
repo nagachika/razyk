@@ -5,7 +5,7 @@
   <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.3.2/jquery.min.js"></script>
   <script type="text/javascript">
     function update() {
-      if ($("#program_mode").is(":checked")) {
+      if ($("#lazyk_mode").is(":checked")) {
         $("#output_buffer").load("/stdout");
       }
       $("#expression").load("/expression");
@@ -15,7 +15,7 @@
       $.post("/set_program",
              {
                program: $("#program").val(),
-               mode: $("#program_mode").is(":checked"),
+               mode: $("#lazyk_mode").is(":checked"),
                stdin: $("#input_buffer").val()
              },
              function() {
@@ -31,7 +31,7 @@
     }
 
     function toggle_mode() {
-      if ($("#program_mode").is(":checked")) {
+      if ($("#lazyk_mode").is(":checked")) {
         $("#inout_pane").show("fast");
       } else {
         $("#inout_pane").hide("fast");
@@ -44,7 +44,7 @@
   <textarea id="program" cols="100">skki</textarea>
   </p>
   <p>
-  <input type="checkbox" id="program_mode" onchange="toggle_mode();" />
+  <input type="checkbox" id="lazyk_mode" onchange="toggle_mode();" />
   <span>LazyK application mode</span>
   </p>
   <p>
