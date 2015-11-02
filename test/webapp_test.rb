@@ -40,12 +40,12 @@ class RazyKWebAppTest < Test::Unit::TestCase
   data(testdata)
   def test_webapp_reduce(data)
     before, after = data
-    expression, stdin_read, stdin_remain, stdout_written = before
+    expression, stdin_read, stdin_remain, stdout = before
     req = OpenStruct.new(params: {
       "expression" => expression,
       "stdin_read" => stdin_read,
       "stdin_remain" => stdin_remain,
-      "stdout_written" => stdout_written,
+      "stdout" => stdout,
     })
     app = RazyK::WebApp.new
     res = app.reduce(req)
@@ -54,6 +54,6 @@ class RazyKWebAppTest < Test::Unit::TestCase
     power_assert { jobj["expression"] == after[0] }
     power_assert { jobj["stdin_read"] == after[1] }
     power_assert { jobj["stdin_remain"] == after[2] }
-    power_assert { jobj["stdout_written"] == after[3] }
+    power_assert { jobj["stdout"] == after[3] }
   end
 end

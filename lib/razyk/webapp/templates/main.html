@@ -34,10 +34,10 @@
     function reduce() {
       r = window.razyk;
       $.post("/reduce",
-             {expression: r.expression, stdin_read: r.stdin_read, stdin_remain: r.stdin_remain, stdout_written: r.stdout, recursive: r.recursive},
+             {expression: r.expression, stdin_read: r.stdin_read, stdin_remain: r.stdin_remain, stdout: r.stdout, recursive: r.recursive},
             function(data) {
               data = JSON.parse(data);
-              window.razyk = new RazyK(data.expression, data.stdin_read, data.stdin_remain, data.stdout_written, window.razyk.recursive);
+              window.razyk = new RazyK(data.expression, data.stdin_read, data.stdin_remain, data.stdout, window.razyk.recursive);
               draw(window.razyk);
             });
     }
