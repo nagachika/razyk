@@ -4,29 +4,41 @@
   <title>RazyK</title>
   <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.3.2/jquery.min.js"></script>
   <script type="text/javascript">
-    function update() {
+    var RazyK = function(expression, stdin_read, stdin_remain, stdout, recursive) {
+      this.expression = expression;
+      this.stdin_read = stdin_read;
+      this.stdin_remain = stdin_remain;
+      this.stdout = stdout;
+      this.recursive = recursive;
+    };
+
+    function draw(razyk) {
+      toggle_mode();
       if ($("#lazyk_mode").is(":checked")) {
-        $("#output_buffer").load("/stdout");
+        $("#output_buffer").text(razyk.stdout);
       }
-      $("#expression").load("/expression");
-      $("#graph").attr("src", "/graph");
-    }
-    function set_program() {
-      $.post("/set_program",
-             {
-               program: $("#program").val(),
-               mode: $("#lazyk_mode").is(":checked"),
-               stdin: $("#input_buffer").val()
-             },
-             function() {
-               update();
-             }, "json");
+      $("#expression").text(razyk.expression);
     }
 
-    function step_reduction() {
-      $.get("/step", {},
-            function() {
-               update();
+    function set_program() {
+      program = $("#program").val();
+      recursive = true;
+      if ($("#lazyk_mode").is(":checked")) {
+        program = "($OUT (" + program + " $IN))";
+        recursive = false;
+      }
+      window.razyk = new RazyK(program, "", $("#input_buffer").val(), "", recursive);
+      draw(window.razyk);
+    }
+
+    function reduce() {
+      r = window.razyk;
+      $.post("/reduce",
+             {expression: r.expression, stdin_read: r.stdin_read, stdin_remain: r.stdin_remain, stdout_written: r.stdout, recursive: r.recursive},
+            function(data) {
+              data = JSON.parse(data);
+              window.razyk = new RazyK(data.expression, data.stdin_read, data.stdin_remain, data.stdout_written, window.razyk.recursive);
+              draw(window.razyk);
             });
     }
 
@@ -49,7 +61,7 @@
   </p>
   <p>
   <input type="button" value="set program" onclick="set_program();" />
-  <input type="button" value="step" onclick="step_reduction();" />
+  <input type="button" value="step" onclick="reduce();" />
   </p>
   <span id="inout_pane" style="display: none">
     <div>stdin</div>
