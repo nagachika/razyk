@@ -1,44 +1,44 @@
 # encoding: utf-8
 
-require_relative "spec_helper"
+require "test_helper"
 
 require "razyk/vm"
 require "stringio"
 
 include RazyK
 
-describe VM do
-  it "should reduce I combinator" do
+class RazyKVMTest < Test::Unit::TestCase
+  def test_reduce_I
     i = Combinator.new(:I)
     x = Combinator.new(:X)
     cons = Pair.new(i, x)
     vm = VM.new(cons)
-    vm.tree.should == cons
-    x.from.size.should == 1
-    x.from[0].should == cons
+    power_assert { vm.tree == cons }
+    power_assert { x.from.size == 1 }
+    power_assert { x.from[0] == cons }
     vm.reduce
-    vm.tree.should == x
-    x.from.size.should == 1
-    x.from[0].should_not == cons
+    power_assert { vm.tree == x }
+    power_assert { x.from.size == 1 }
+    power_assert { x.from[0] != cons }
   end
 
-  it "should reduce K combinator" do
+  def test_reduce_K
     k = Combinator.new(:K)
     x = Combinator.new(:X)
     y = Combinator.new(:Y)
     cons1 = Pair.new(k, x)
     cons2 = Pair.new(cons1, y)
     vm = VM.new(cons2)
-    vm.tree.should == cons2
-    x.from.size.should == 1
-    x.from[0].should == cons1
+    power_assert { vm.tree == cons2 }
+    power_assert { x.from.size == 1 }
+    power_assert { x.from[0] == cons1 }
     vm.reduce
-    vm.tree.should == x
-    x.from.size.should == 1
-    x.from[0].should_not == cons1
+    power_assert { vm.tree == x }
+    power_assert { x.from.size == 1 }
+    power_assert { x.from[0] != cons1 }
   end
 
-  it "should reduce S combinator" do
+  def test_reduce_S
     s = Combinator.new(:S)
     x = Combinator.new(:X)
     y = Combinator.new(:Y)
@@ -47,20 +47,20 @@ describe VM do
     cons2 = Pair.new(cons1, y)
     cons3 = Pair.new(cons2, z)
     vm = VM.new(cons3)
-    vm.tree.should == cons3
-    x.from.should == [ cons1 ]
-    y.from.should == [ cons2 ]
-    z.from.should == [ cons3 ]
+    power_assert { vm.tree == cons3 }
+    power_assert { x.from == [ cons1 ] }
+    power_assert { y.from == [ cons2 ] }
+    power_assert { z.from == [ cons3 ] }
     vm.reduce
-    vm.tree.inspect.should == "((X Z) (Y Z))"
-    x.from.size.should == 1
-    x.from.should_not == [ cons1 ]
-    y.from.size.should == 1
-    y.from.should_not == [ cons2 ]
-    z.from.size.should == 2
+    power_assert { vm.tree.inspect == "((X Z) (Y Z))" }
+    power_assert { x.from.size == 1 }
+    power_assert { x.from != [ cons1 ] }
+    power_assert { y.from.size == 1 }
+    power_assert { y.from != [ cons2 ] }
+    power_assert { z.from.size == 2 }
   end
 
-  it "should reduce CONS and CAR combinator" do
+  def test_reduce_CONS_CAR
     cons = Combinator.new(:CONS)
     a = Combinator.new(:A)
     b = Combinator.new(:B)
@@ -69,11 +69,11 @@ describe VM do
     root = Pair.new(car, list)
     vm = VM.new(root)
     vm.evaluate(vm.tree)
-    vm.tree.should == a
-    a.from.size.should == 1
+    power_assert { vm.tree == a }
+    power_assert { a.from.size == 1 }
   end
 
-  it "should reduce CONS and CDR combinator" do
+  def test_reduce_CONS_CDR
     cons = Combinator.new(:CONS)
     a = Combinator.new(:A)
     b = Combinator.new(:B)
@@ -82,36 +82,36 @@ describe VM do
     root = Pair.new(cdr, list)
     vm = VM.new(root)
     vm.evaluate(vm.tree)
-    vm.tree.should == b
-    b.from.size.should == 1
+    power_assert { vm.tree == b }
+    power_assert { b.from.size == 1 }
   end
 
-  it "should reduce IN combinator (CAR)" do
+  def test_reduce_CAR_IN
     input = Combinator.new(:IN)
     car = Combinator.new(:CAR)
     root = Pair.new(car, input)
     buf = StringIO.new([100, 200].pack("C"))
     vm = VM.new(root, buf)
     vm.evaluate(vm.tree)
-    vm.tree.should be_is_a(Combinator)
-    vm.tree.label.should == 100
-    buf.pos.should == 1
+    power_assert { vm.tree.is_a?(Combinator) }
+    power_assert { vm.tree.label == 100 }
+    power_assert { buf.pos == 1 }
   end
 
-  it "should reduce IN combinator (CDR)" do
+  def test_reduce_CDR_IN
     input = Combinator.new(:IN)
     cdr = Combinator.new(:CDR)
     root = Pair.new(cdr, input)
     buf = StringIO.new([100, 200].pack("C*"))
     vm = VM.new(root, buf)
     vm.evaluate(vm.tree)
-    vm.tree.should be_is_a(Pair)
-    vm.tree.cdr.label == :IN
-    vm.tree.from.size.should == 1
-    buf.pos.should == 2
+    power_assert { vm.tree.is_a?(Pair) }
+    power_assert { vm.tree.cdr.label == :IN }
+    power_assert { vm.tree.from.size == 1 }
+    power_assert { buf.pos == 2 }
   end
 
-  it "should reduce PUTC combinator" do
+  def test_reduce_PUTC
     putc = Combinator.new(:PUTC)
     a = Combinator.new(97)
     x = Combinator.new(:X)
@@ -121,8 +121,8 @@ describe VM do
     obuf = StringIO.new("")
     vm = VM.new(root,ibuf, obuf)
     vm.evaluate(vm.tree)
-    obuf.string.should == "a"
-    vm.tree.should == x
-    x.from.size.should == 1
+    power_assert { obuf.string == "a" }
+    power_assert { vm.tree == x }
+    power_assert { x.from.size == 1 }
   end
 end
