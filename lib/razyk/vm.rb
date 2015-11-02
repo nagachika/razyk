@@ -54,20 +54,20 @@ module RazyK
       stack.push(new_root)
     end
 
-    def evaluate(root, gen=nil)
+    def evaluate(root, &blk)
       stack = [root]
-      until step(stack, gen).nil?
-        if gen
-          gen.yield(self)
+      until step(stack, &blk).nil?
+        if blk
+          blk.call(self)
         end
       end
       if @recursive and stack.last.is_a?(Pair)
-        evaluate(stack.last.cdr, gen)
+        evaluate(stack.last.cdr, &blk)
       end
       nil
     end
 
-    def step(stack, gen=nil)
+    def step(stack, &blk)
       return nil if stack.empty?
       while stack.last.is_a?(Pair)
         stack.push(stack.last.car)
@@ -130,7 +130,7 @@ module RazyK
       when :INC
         # (INC n) -> n+1 : increment church number
         raise StackUnderflow if stack.empty?
-        evaluate(stack.last.cdr, gen)
+        evaluate(stack.last.cdr, &blk)
         root, n = pop_pairs(stack, 1)
         unless n.integer?
           begin
@@ -145,7 +145,7 @@ module RazyK
         # (PUTC x y) -> y : evaluate x and putchar it
         raise StackUnderflow if stack.size < 2
         x = stack.pop
-        evaluate(x.cdr, gen)
+        evaluate(x.cdr, &blk)
         unless x.cdr.integer?
           begin
             msg = "output is not church number but #{x.cdr.inspect}"
@@ -190,23 +190,12 @@ module RazyK
     end
 
     def reduce
-      @generator ||= Enumerator.new{|e| evaluate(self.tree, e) }
-      begin
-        @generator.next
-        self
-      rescue StopIteration
-        nil
-      end
+      evaluate(self.tree) {|vm| return vm }
+      nil
     end
 
     def run(&blk)
-      if blk
-        while reduce
-          blk.call(self)
-        end
-      else
-        evaluate(self.tree, nil)
-      end
+      evaluate(self.tree, &blk)
     end
   end
 end
