@@ -28,6 +28,7 @@ Gem::Specification.new do |s|
 
   s.add_development_dependency "bundler", "~> 1.10"
   s.add_development_dependency "rake", "~> 10.0"
+  s.add_development_dependency "racc"
   s.add_development_dependency "test-unit"
   s.add_development_dependency "simplecov"
   s.add_development_dependency "test-unit-power_assert"
