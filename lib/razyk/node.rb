@@ -62,7 +62,12 @@ module RazyK
     end
 
     def to_s
-      @label.to_s
+      case l = @label.to_s
+      when "S", "K", "I"
+        l
+      else
+        "$" + l
+      end
     end
     def inspect
       to_s

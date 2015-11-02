@@ -52,7 +52,7 @@ class RazyKVMTest < Test::Unit::TestCase
     power_assert { y.from == [ cons2 ] }
     power_assert { z.from == [ cons3 ] }
     vm.reduce
-    power_assert { vm.tree.inspect == "((X Z) (Y Z))" }
+    power_assert { vm.tree.inspect == "(($X $Z) ($Y $Z))" }
     power_assert { x.from.size == 1 }
     power_assert { x.from != [ cons1 ] }
     power_assert { y.from.size == 1 }

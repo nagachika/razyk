@@ -13,7 +13,7 @@ class RazyKNodeTest < Test::Unit::TestCase
       Combinator.new(:l).label == :l
     end
     power_assert do
-      Combinator.new(:name).to_s == "name"
+      Combinator.new(:name).to_s == "$name"
     end
   end
 
@@ -28,7 +28,7 @@ class RazyKNodeTest < Test::Unit::TestCase
       pair.cdr == b
     end
     power_assert do
-      pair.to_s == "(a b)"
+      pair.to_s == "($a $b)"
     end
     power_assert do
       a.from == [pair]
@@ -61,7 +61,7 @@ class RazyKNodeTest < Test::Unit::TestCase
       b.from == [pair]
     end
     power_assert do
-      pair.to_s == "(c b)"
+      pair.to_s == "($c $b)"
     end
   end
 
@@ -88,7 +88,7 @@ class RazyKNodeTest < Test::Unit::TestCase
       c.from == [pair]
     end
     power_assert do
-      pair.to_s == "(a c)"
+      pair.to_s == "($a $c)"
     end
   end
 end
