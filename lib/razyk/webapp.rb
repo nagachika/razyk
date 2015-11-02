@@ -3,11 +3,37 @@ require "rack"
 require "tempfile"
 require "thread"
 require "stringio"
+require "json"
 
 require "razyk/graph"
 
 module RazyK
   class WebApp
+    class InputStream
+      def initialize(str="")
+        @buf = str.b
+        @chars = []
+      end
+      def getbyte
+        if @buf
+          ret = @buf.unpack("C")[0]
+          @buf = @buf[1..-1]
+          if ret
+            @chars << ret
+          end
+          ret
+        else
+          nil
+        end
+      end
+      def wrote
+        @chars.pack("C*")
+      end
+      def remain
+        @buf || ""
+      end
+    end
+
     def initialize
       reset
     end
@@ -137,6 +163,30 @@ module RazyK
       res
     end
 
+    def reduce(req)
+      stdin_read = req.params["stdin_read"] || ""
+      stdin_remain = req.params["stdin_remain"] || ""
+      stdout_written = req.params["stdout_written"] || ""
+      expression = req.params["expression"] || "(OUT (I IN))"
+      recursive = (req.params["recursive"] == "true")
+      port_in = InputStream.new(stdin_remain)
+      port_out = StringIO.new("")
+
+      memory = {}
+      tree = RazyK::Parser.parse(expression, memory: memory)
+      vm = VM.new(tree, port_in, port_out, recursive)
+      vm.reduce
+      res = Rack::Response.new
+      res.header["Content-Type"] = "application/json"
+      res.write(JSON.generate({
+        expression: vm.tree.inspect,
+        stdin_read: stdin_read + port_in.wrote,
+        stdin_remain: port_in.remain,
+        stdout_written: stdout_written + port_out.string,
+      }))
+      res
+    end
+
     def call(env)
       req = Rack::Request.new(env)
       case req.path
@@ -152,6 +202,8 @@ module RazyK
         res = expression(req)
       when "/graph"
         res = graph(req)
+      when "/reduce"
+        res = reduce(req)
       else
         res = not_found(req)
       end
