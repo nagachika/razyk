@@ -116,11 +116,9 @@ module RazyK
         replace_root(stack, root, new_root)
       when :IN
         # (IN f) -> (CONS <CH> IN f) where <CH> is a byte from stdin
-        ch = @input.read(1)
+        ch = @input.getbyte
         if ch.nil?
           ch = 256
-        else
-          ch = ch.unpack("C")[0]
         end
         new_root = Pair.new(Pair.new(:CONS, Combinator.new(ch)),
                             :DUMMY) # reuse :IN combinator
