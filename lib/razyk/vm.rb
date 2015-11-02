@@ -92,23 +92,6 @@ module RazyK
         root, x = pop_pairs(stack, 1)
         new_root = Pair.new(Pair.new(x, :S), :K)
         replace_root(stack, root, new_root)
-      when Integer
-        # (<N> f x) -> x               (N == 0)
-        #           -> (f (<N-1> f x)) (N > 0)
-        root, f, x = pop_pairs(stack, 2)
-        num = comb.label
-        if num == 0
-          replace_root(stack, root, x)
-        else
-          # shortcut
-          if f.label == :INC and x.label.is_a?(Integer)
-            replace_root(stack, root, Combinator.new(num + x.label))
-          else
-            dec_pair = Pair.new(Combinator.new(num-1), f)
-            new_root = Pair.new(f, Pair.new(dec_pair, x))
-            replace_root(stack, root, new_root)
-          end
-        end
       when :CONS
         # (CONS a d f) -> (f a d)
         root, a, d, f = pop_pairs(stack, 3)
@@ -149,7 +132,7 @@ module RazyK
         raise StackUnderflow if stack.empty?
         evaluate(stack.last.cdr, gen)
         root, n = pop_pairs(stack, 1)
-        unless n.label.is_a?(Integer)
+        unless n.integer?
           begin
             msg = "argument of INC combinator is not a church number but #{n.inspect}"
           rescue
@@ -163,7 +146,7 @@ module RazyK
         raise StackUnderflow if stack.size < 2
         x = stack.pop
         evaluate(x.cdr, gen)
-        unless x.cdr.label.is_a?(Integer)
+        unless x.cdr.integer?
           begin
             msg = "output is not church number but #{x.cdr.inspect}"
           rescue
@@ -179,8 +162,27 @@ module RazyK
         root = stack.pop
         y = root.cut_cdr
         replace_root(stack, root, y)
-      else # unknown combinator... treat as combinator without enough arguments
-        raise StackUnderflow
+      else
+        if comb.integer?
+          # (<N> f x) -> x               (N == 0)
+          #           -> (f (<N-1> f x)) (N > 0)
+          root, f, x = pop_pairs(stack, 2)
+          num = Integer(comb.label)
+          if num == 0
+            replace_root(stack, root, x)
+          else
+            # shortcut
+            if f.label == :INC and x.integer?
+              replace_root(stack, root, Combinator.new(num + Integer(x.label)))
+            else
+              dec_pair = Pair.new(Combinator.new(num-1), f)
+              new_root = Pair.new(f, Pair.new(dec_pair, x))
+              replace_root(stack, root, new_root)
+            end
+          end
+        else # unknown combinator... treat as combinator without enough arguments
+          raise StackUnderflow
+        end
       end
       true
     rescue StackUnderflow

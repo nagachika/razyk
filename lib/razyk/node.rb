@@ -54,6 +54,10 @@ module RazyK
       self.class.disconnect(self, a)
       self.class.connect(self, b)
     end
+
+    def integer?
+      @label.is_a?(Integer) or (/\A\d+\z/ =~ @label)
+    end
   end
 
   class Combinator < Node
