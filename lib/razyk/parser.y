@@ -14,7 +14,7 @@ rule
 
 program :   ccexpr
         {
-          result = val[0] || Combinator.new(:I)
+          result = val[0] || Combinator.get(:I, @memory)
         }
         ;
 
@@ -27,46 +27,46 @@ ccexpr  :   /* epsilon */
           if val[0].nil?
             result = val[1]
           else
-            result = Pair.new(val[0], val[1])
+            result = Pair.cons(val[0], val[1], @memory)
           end
         }
         ;
 
 expr    :   SMALL_I
         {
-          result = Combinator.new(:I)
+          result = Combinator.get(:I, @memory)
         }
         |   expr2
         ;
 
 iotaexpr:   SMALL_I
         {
-          result = Combinator.new(:IOTA)
+          result = Combinator.get(:IOTA, @memory)
         }
         |   expr2
         ;
 
 expr2   :   I
         {
-          result = Combinator.new(:I)
+          result = Combinator.get(:I, @memory)
         }
         |   K
         {
-          result = Combinator.new(:K)
+          result = Combinator.get(:K, @memory)
         }
         |   S
         {
-          result = Combinator.new(:S)
+          result = Combinator.get(:S, @memory)
         }
         |   no_empty_jot_expr
         {
-          comb = Combinator.new(:I)
+          comb = Combinator.get(:I, @memory)
           @jot.reverse_each do |i|
             case i
             when 0
-              comb = Pair.new(Pair.new(comb, :S), :K)
+              comb = Pair.cons(Pair.cons(comb, :S, @memory), :K, @memory)
             when 1
-              comb = Pair.new(:S, Pair.new(:K, comb))
+              comb = Pair.cons(:S, Pair.cons(:K, comb, @memory), @memory)
             end
           end
           @jot.clear
@@ -74,11 +74,11 @@ expr2   :   I
         }
         |   BACKSLASH expr expr
         {
-          result = Pair.new(val[1], val[2])
+          result = Pair.cons(val[1], val[2], @memory)
         }
         |   ASTAR iotaexpr iotaexpr
         {
-          result = Pair.new(val[1], val[2])
+          result = Pair.cons(val[1], val[2], @memory)
         }
         |   LPAR ccexpr RPAR
         {
@@ -86,7 +86,7 @@ expr2   :   I
         }
         |   LITERAL
         {
-          result = Combinator.new(val[0].to_sym)
+          result = Combinator.get(val[0].to_sym, @memory)
         }
         | STRING
         {
@@ -114,9 +114,9 @@ require "razyk/node"
 
 def str2list(str)
   # (K 256) means End-of-stream. RazyK String adopt it as null terminator
-  head = Pair.new(:K, 256)
+  head = Pair.cons(:K, 256, @memory)
   str.unpack("C*").reverse_each do |ch|
-    head = Pair.new(Pair.new(:CONS, ch), head)
+    head = Pair.cons(Pair.cons(:CONS, ch, @memory), head, @memory)
   end
   head
 end
@@ -219,6 +219,7 @@ end
 def parse(str, opt={})
   @buf = str
   @jot = []
+  @memory = opt[:memory] || {}
   yyparse self, :scan
 end
 

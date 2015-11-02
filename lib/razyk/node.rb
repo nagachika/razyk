@@ -73,6 +73,11 @@ module RazyK
   end
 
   class Combinator < Node
+    def self.get(comb, mem)
+      n = comb.to_s
+      mem[n] ||= self.new(comb)
+    end
+
     def initialize(comb)
       super(comb)
     end
@@ -94,6 +99,11 @@ module RazyK
   # Pair has only two child node (car and cdr).
   #  It represent term of combinators or terms.
   class Pair < Node
+    def self.cons(car, cdr, mem)
+      n = "(#{car} #{cdr})"
+      mem[n] ||= self.new(car, cdr)
+    end
+
     def initialize(car, cdr)
       car = Combinator.new(car) unless car.is_a?(Node)
       cdr = Combinator.new(cdr) unless cdr.is_a?(Node)
