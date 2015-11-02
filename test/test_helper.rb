@@ -21,6 +21,7 @@ end
 
 require 'test/unit'
 require 'test/unit/power_assert'
+require 'pry'
 
 $LOAD_PATH.unshift File.expand_path('../../lib', __FILE__)
 
