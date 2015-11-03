@@ -140,7 +140,7 @@ module RazyK
           end
           raise msg
         end
-        replace_root(stack, root, Combinator.new(n.label + 1))
+        replace_root(stack, root, Combinator.new(n.integer + 1))
       when :PUTC
         # (PUTC x y) -> y : evaluate x and putchar it
         raise StackUnderflow if stack.size < 2
