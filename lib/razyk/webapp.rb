@@ -70,6 +70,7 @@ module RazyK
       res.header["Content-Type"] = "application/json"
       res.write(JSON.generate({
         expression: vm.tree.inspect,
+        nodes: vm.tree.as_json,
         stdin_read: stdin_read + port_in.wrote,
         stdin_remain: port_in.remain,
         stdout: stdout + port_out.string,

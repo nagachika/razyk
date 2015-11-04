@@ -71,6 +71,10 @@ module RazyK
       end
     end
 
+    def as_json
+      {name: @label.to_s}
+    end
+
     def self.list(*args, terminator: nil, memory: {})
       cons = lambda{|x, y| Pair.cons(x, y, memory) }
       term = (terminator || cons[:K, 256])
@@ -152,6 +156,10 @@ module RazyK
     end
     def inspect
       to_s
+    end
+
+    def as_json
+      {name: "", children: [@car.as_json, @cdr.as_json]}
     end
   end
 end
