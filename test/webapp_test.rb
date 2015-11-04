@@ -14,28 +14,13 @@ class RazyKWebAppTest < Test::Unit::TestCase
     ["(($PUTC ((($CAR (I $IN)) $INC) $0)) ($OUT ($CDR (I $IN))))", "", "a", ""],
     ["(($PUTC ((((I $IN) K) $INC) $0)) ($OUT ($CDR (I $IN))))", "", "a", ""],
     ["(($PUTC ((($IN K) $INC) $0)) ($OUT ($CDR $IN)))", "", "a", ""],
-    ["(($PUTC ((((($CONS $97) $IN) K) $INC) $0)) ($OUT ($CDR (($CONS $97) $IN))))", "a", "", ""],
-    ["(($PUTC ((((K $97) $IN) $INC) $0)) ($OUT ($CDR (($CONS $97) $IN))))", "a", "", ""],
-    ["(($PUTC (($97 $INC) $0)) ($OUT ($CDR (($CONS $97) $IN))))", "a", "", ""],
-    ["(($PUTC $97) ($OUT ($CDR (($CONS $97) $IN))))", "a", "", ""],
-    ["($OUT ($CDR (($CONS $97) $IN)))", "a", "", "a"],
-    ["(($PUTC ((($CAR ($CDR (($CONS $97) $IN))) $INC) $0)) ($OUT ($CDR ($CDR (($CONS $97) $IN)))))", "a", "", "a"],
-    ["(($PUTC (((($CDR (($CONS $97) $IN)) K) $INC) $0)) ($OUT ($CDR ($CDR (($CONS $97) $IN)))))", "a", "", "a"],
-    ["(($PUTC (((((($CONS $97) $IN) (K I)) K) $INC) $0)) ($OUT ($CDR ((($CONS $97) $IN) (K I)))))", "a", "", "a"],
-    ["(($PUTC ((((((K I) $97) $IN) K) $INC) $0)) ($OUT ($CDR (((K I) $97) $IN))))", "a", "", "a"],
-    ["(($PUTC ((((I $IN) K) $INC) $0)) ($OUT ($CDR (I $IN))))", "a", "", "a"],
-    ["(($PUTC ((($IN K) $INC) $0)) ($OUT ($CDR $IN)))", "a", "", "a"],
-    ["(($PUTC ((((($CONS $256) $IN) K) $INC) $0)) ($OUT ($CDR (($CONS $256) $IN))))", "a", "", "a"],
-    ["(($PUTC ((((K $256) $IN) $INC) $0)) ($OUT ($CDR (($CONS $256) $IN))))", "a", "", "a"],
-    ["(($PUTC (($256 $INC) $0)) ($OUT ($CDR (($CONS $256) $IN))))", "a", "", "a"],
-    ["(($PUTC $256) ($OUT ($CDR (($CONS $256) $IN))))", "a", "", "a"],
   ]
   i_series.each_cons(2).with_index do |(before, after), idx|
     testdata["i_#{idx}"] = [before, after]
   end
-  testdata["i_aa"] = [
+  testdata["i_ab"] = [
     ["(($PUTC ((($IN K) $INC) $0)) ($OUT ($CDR $IN)))", "", "ab", ""],
-    ["(($PUTC ((((($CONS $97) $IN) K) $INC) $0)) ($OUT ($CDR (($CONS $97) $IN))))", "a", "b", ""]
+    ["(($PUTC (((((S ((S I) (K $97))) (K $IN)) K) $INC) $0)) ($OUT ($CDR ((S ((S I) (K $97))) (K $IN)))))", "a", "b", ""]
   ]
   data(testdata)
   def test_webapp_reduce(data)

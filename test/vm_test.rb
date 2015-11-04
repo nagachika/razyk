@@ -106,7 +106,7 @@ class RazyKVMTest < Test::Unit::TestCase
     vm = VM.new(root, buf)
     vm.evaluate(vm.tree)
     power_assert { vm.tree.is_a?(Pair) }
-    power_assert { vm.tree.cdr.label == :IN }
+    power_assert { vm.tree.inspect == "((S ((S I) (K $200))) (K $IN))" }
     power_assert { vm.tree.from.size == 1 }
     power_assert { buf.pos == 2 }
   end

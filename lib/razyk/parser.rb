@@ -15,12 +15,7 @@ module RazyK
 module_eval(<<'...end parser.y/module_eval...', 'parser.y', 114)
 
 def str2list(str)
-  # (K 256) means End-of-stream. RazyK String adopt it as null terminator
-  head = Pair.cons(:K, 256, @memory)
-  str.unpack("C*").reverse_each do |ch|
-    head = Pair.cons(Pair.cons(:CONS, ch, @memory), head, @memory)
-  end
-  head
+  Node.list(*str.unpack("C*"), memory: @memory)
 end
 
 def scan

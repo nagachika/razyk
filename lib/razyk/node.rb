@@ -70,6 +70,15 @@ module RazyK
         Integer(@label.to_s)
       end
     end
+
+    def self.list(*args, terminator: nil, memory: {})
+      cons = lambda{|x, y| Pair.cons(x, y, memory) }
+      term = (terminator || cons[:K, 256])
+      args.reverse.each do |i|
+        term = cons[cons[:S, cons[cons[:S, :I], cons[:K, i]]], cons[:K, term]]
+      end
+      term
+    end
   end
 
   class Combinator < Node

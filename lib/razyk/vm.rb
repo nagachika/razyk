@@ -100,15 +100,13 @@ module RazyK
         new_root = Pair.new(Pair.new(f, a), d)
         replace_root(stack, root, new_root)
       when :IN
-        # (IN f) -> (CONS <CH> IN f) where <CH> is a byte from stdin
+        # (IN f) -> (S (S I (K <CH>)) (K IN)) where <CH> is a byte from stdin
         ch = @input.getbyte
         if ch.nil?
           ch = 256
         end
-        new_root = Pair.new(Pair.new(:CONS, Combinator.new(ch)),
-                            :DUMMY) # reuse :IN combinator
+        new_root = Node.list(Combinator.new(ch), terminator: Combinator.new(:IN))
         comb.replace(new_root)
-        new_root.cdr = comb
         stack.push(new_root)
       when :CAR
         # (CAR x) -> (x K)       (CAR = (Lx.x TRUE), TRUE = (Lxy.x) = K)
