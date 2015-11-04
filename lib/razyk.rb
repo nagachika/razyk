@@ -10,7 +10,7 @@ module RazyK
     opt[:memory] ||= {}
     tree = Parser.parse(program, opt)
     root = Pair.new(:OUT, Pair.new(tree, :IN))
-    vm = VM.new(root, opt[:input], opt[:output])
+    vm = VM.new(root, opt[:input], opt[:output], recursive: opt[:recursive], statistics: opt[:statistics])
 
     if blk
       vm.run(&blk)

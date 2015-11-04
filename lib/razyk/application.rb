@@ -30,6 +30,9 @@ module RazyK
           @step = true
           @web_server = true
         end
+        opt.on("--[no-]statistics", "dump statistics information at exit") do
+          @statistics = { count: 0 }
+        end
       end
     end
     private :option_parser
@@ -61,12 +64,22 @@ module RazyK
         @program = IO.read(filepath)
       end
 
+      opts = {
+        statistics: @statistics
+      }
+
       if @step
-        RazyK.run(@program) do |vm|
+        RazyK.run(@program, opts) do |vm|
           $stderr.puts vm.tree.inspect
         end
       else
-        RazyK.run(@program)
+        RazyK.run(@program, opts)
+      end
+    ensure
+      if @statistics
+        puts "Statistics Info:"
+        puts "\t#{@statistics[:started_at]} - #{@statistics[:finished_at]} (#{@statistics[:finished_at]-@statistics[:started_at]} sec)"
+        puts "\treduce count: #{@statistics[:count]}"
       end
     end
 

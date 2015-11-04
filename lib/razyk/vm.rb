@@ -12,12 +12,13 @@ module RazyK
   class VM
     class StackUnderflow < StandardError; end
 
-    def initialize(tree, input=$stdin, output=$stdout, recursive=false)
+    def initialize(tree, input=$stdin, output=$stdout, recursive: false, statistics: nil)
       @root = Node.new(:root, [], [tree])
       @generator = nil
       @input = input
       @output = output
       @recursive = recursive
+      @statistics = statistics
     end
 
     def tree
@@ -69,6 +70,7 @@ module RazyK
 
     def step(stack, &blk)
       return nil if stack.empty?
+      @statistics[:count] += 1 if @statistics
       while stack.last.is_a?(Pair)
         stack.push(stack.last.car)
       end
@@ -195,7 +197,13 @@ module RazyK
     end
 
     def run(&blk)
+      if @statistics
+        @statistics[:started_at] = Time.now
+      end
       evaluate(self.tree, &blk)
+      if @statistics
+        @statistics[:finished_at] = Time.now
+      end
     end
   end
 end

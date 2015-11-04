@@ -64,7 +64,7 @@ module RazyK
 
       memory = {}
       tree = RazyK::Parser.parse(expression, memory: memory)
-      vm = VM.new(tree, port_in, port_out, recursive)
+      vm = VM.new(tree, port_in, port_out, recursive: recursive)
       vm.reduce
       res = Rack::Response.new
       res.header["Content-Type"] = "application/json"
