@@ -20,7 +20,7 @@ class RazyKWebAppTest < Test::Unit::TestCase
   end
   testdata["i_ab"] = [
     ["(($PUTC ((($IN K) $INC) $0)) ($OUT ($CDR $IN)))", "", "ab", ""],
-    ["(($PUTC (((((S ((S I) (K $97))) (K $IN)) K) $INC) $0)) ($OUT ($CDR ((S ((S I) (K $97))) (K $IN)))))", "a", "b", ""]
+    ["(($PUTC ((((I $IN) K) $INC) $0)) ($OUT ((I $IN) (S K))))", "a", "b", ""]
   ]
   data(testdata)
   def test_webapp_reduce(data)

@@ -123,9 +123,9 @@ module RazyK
         root, f = pop_pairs(stack, 1)
         new_root = Pair.new(
                      Pair.new(:PUTC,
-                       Pair.new(Pair.new(Pair.new(:CAR, f), :INC), 0)),
+                       Pair.new(Pair.new(Pair.new(f, :K), :INC), 0)),
                      Pair.new(comb, # reuse :OUT combinator
-                              Pair.new(:CDR, f)))
+                              Pair.new(f, Pair.new(:S, :K))))
         replace_root(stack, root, new_root)
       when :INC
         # (INC n) -> n+1 : increment church number
