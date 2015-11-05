@@ -9,19 +9,16 @@ require "ostruct"
 class RazyKWebAppTest < Test::Unit::TestCase
 
   testdata = {}
-  i_series = [
-    ["($OUT (I $IN))", "", "a", ""],
-    ["(($PUTC ((($CAR (I $IN)) $INC) $0)) ($OUT ($CDR (I $IN))))", "", "a", ""],
-    ["(($PUTC ((((I $IN) K) $INC) $0)) ($OUT ($CDR (I $IN))))", "", "a", ""],
-    ["(($PUTC ((($IN K) $INC) $0)) ($OUT ($CDR $IN)))", "", "a", ""],
-  ]
-  i_series.each_cons(2).with_index do |(before, after), idx|
-    testdata["i_#{idx}"] = [before, after]
+  # simple combinator reduction test without in/out
+  [["IK", "K"], ["KIS", "I"], ["S$x$y$z", "(($x $z) ($y $z))"]].each do |before, after|
+    testdata[before.downcase] = [[ before, "", "ab", ""], [after, "", "ab", ""]]
   end
-  testdata["i_ab"] = [
-    ["(($PUTC ((($IN K) $INC) $0)) ($OUT ($CDR $IN)))", "", "ab", ""],
-    ["(($PUTC ((((I $IN) K) $INC) $0)) ($OUT ((I $IN) (S K))))", "a", "b", ""]
-  ]
+
+  # in/out combinators
+  testdata["in_car"] = [["$IN K", "", "ab", ""], ["(((S ((S I) (K $97))) (K $IN)) K)", "a", "b", ""]]
+  testdata["out"] = [["$OUT K", "", "ab", ""], ["(($PUTC (((K K) $INC) $0)) ($OUT (K (S K))))", "", "ab", ""]]
+  testdata["putc"] = [["$PUTC $97 $y", "", "ab", ""], ["$y", "", "ab", "a"]]
+
   data(testdata)
   def test_webapp_reduce(data)
     before, after = data
