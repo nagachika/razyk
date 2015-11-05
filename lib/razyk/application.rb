@@ -33,6 +33,15 @@ module RazyK
         opt.on("--[no-]statistics", "dump statistics information at exit") do
           @statistics = { count: 0 }
         end
+        opt.on("--audio", "output audio stream (supported on only OS X and coreaudio.gem is required)") do
+          begin
+            require "coreaudio"
+          rescue LoadError
+            raise RazyK::ApplicationError, "--audio option require coreaudio.gem (available only on OS X). Please install coreaudio.gem"
+          end
+          require "razyk/audio"
+          @audio = true
+        end
       end
     end
     private :option_parser
@@ -65,7 +74,8 @@ module RazyK
       end
 
       opts = {
-        statistics: @statistics
+        statistics: @statistics,
+        audio: @audio,
       }
 
       if @step

@@ -6,7 +6,11 @@ require "razyk/vm"
 module RazyK
   def self.run(program, opt={}, &blk)
     opt[:input] ||= $stdin
-    opt[:output] ||= $stdout
+    if opt[:audio]
+      opt[:output] = RazyK::Audio::Port.new
+    else
+      opt[:output] ||= $stdout
+    end
     opt[:memory] ||= {}
     tree = Parser.parse(program, opt)
     root = Pair.new(:OUT, Pair.new(tree, :IN))

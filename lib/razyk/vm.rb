@@ -156,6 +156,9 @@ module RazyK
         end
         num = x.cdr.integer
         if num >= 256
+          if @output != $stdout and @output != STDOUT
+            @output.close_write
+          end
           return nil
         end
         @output.write([num].pack("C"))
