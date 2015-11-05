@@ -53,6 +53,22 @@ module RazyK
       res
     end
 
+    def parse(req)
+      expression = req.params["expression"] || "(OUT (I IN))"
+
+      memory = {}
+      tree = RazyK::Parser.parse(expression, memory: memory)
+      res = Rack::Response.new
+      res.header["Content-Type"] = "application/json"
+      json_state = JSON::State.from_state(nil)
+      json_state.max_nesting = 0
+      res.write({
+        expression: tree.inspect,
+        nodes: tree.as_json,
+      }.to_json(json_state))
+      res
+    end
+
     def reduce(req)
       stdin_read = req.params["stdin_read"] || ""
       stdin_remain = req.params["stdin_remain"] || ""
@@ -85,6 +101,8 @@ module RazyK
       case req.path
       when "/"
         res = main_page(req)
+      when "/parse"
+        res = parse(req)
       when "/reduce"
         res = reduce(req)
       else

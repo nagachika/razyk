@@ -99,12 +99,19 @@
     function set_program() {
       program = $("#program").val();
       recursive = true;
+
       if ($("#lazyk_mode").is(":checked")) {
         program = "($OUT (" + program + " $IN))";
         recursive = false;
       }
       window.razyk = new RazyK(program, {name: ""}, "", $("#input_buffer").val(), "", recursive);
-      draw(window.razyk);
+      $.post("/parse", {expression: program},
+             function(data) {
+               data = JSON.parse(data);
+               window.razyk.expression = data.expression;
+               window.razyk.nodes = data.nodes;
+               draw(window.razyk);
+             });
     }
 
     function reduce() {
