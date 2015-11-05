@@ -6,7 +6,7 @@ require "thread"
 module RazyK::Audio
   class Player
     def initialize(tempo: 4)
-      @tempo = 4
+      @tempo = tempo
       @dev = CoreAudio.default_output_device
       @buf = @dev.output_buffer(1024)
       @beat_samples = (@dev.nominal_rate / (@tempo * 4)).floor

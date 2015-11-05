@@ -13,7 +13,7 @@ module RazyK::Audio
     def write(s)
       bytes = s.unpack("C*")
       if @player.nil?
-        @player ||= RazyK::Audio::Player.new(tempo: bytes.shift)
+        @player = RazyK::Audio::Player.new(tempo: bytes.shift)
       end
       bytes.each do |b|
         if @note_length and @octave
