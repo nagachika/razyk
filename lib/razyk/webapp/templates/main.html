@@ -3,8 +3,12 @@
 <head>
   <title>RazyK</title>
   <meta charset="UTF-8">
-  <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.3.2/jquery.min.js"></script>
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
   <script type="text/javascript" src="http://d3js.org/d3.v3.min.js" charset="utf-8"></script>
+  <link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap-theme.min.css">
   <script type="text/javascript">
     var RazyK = function(expression, nodes, stdin_read, stdin_remain, stdout, recursive) {
       this.expression = expression;
@@ -96,7 +100,7 @@
         .style("fill", coloring);
     }
 
-    function set_program() {
+    function set_program(cb) {
       program = $("#program").val();
       recursive = true;
 
@@ -107,22 +111,50 @@
       window.razyk = new RazyK(program, {name: ""}, "", $("#input_buffer").val(), "", recursive);
       $.post("/parse", {expression: program},
              function(data) {
-               data = JSON.parse(data);
                window.razyk.expression = data.expression;
                window.razyk.nodes = data.nodes;
                draw(window.razyk);
+               if (cb) { cb(); }
              });
     }
 
-    function reduce() {
+    function reduce(cb) {
       r = window.razyk;
       $.post("/reduce",
              {expression: r.expression, stdin_read: r.stdin_read, stdin_remain: r.stdin_remain, stdout: r.stdout, recursive: r.recursive},
             function(data) {
-              data = JSON.parse(data);
+              finished = r.expression == data.expression;
               window.razyk = new RazyK(data.expression, data.nodes, data.stdin_read, data.stdin_remain, data.stdout, window.razyk.recursive);
               draw(window.razyk);
+              if (cb) { cb(finished); }
             });
+    }
+
+    function run() {
+      var wait = 500;
+      if (!window.running) { return; }
+      if ( window.razyk == undefined ) {
+        set_program(function() {
+          setTimeout(run, wait);
+        });
+      } else {
+        reduce(function(finished) {
+          if (!finished) {
+            setTimeout(run, wait);
+          } else {
+            window.running = false;
+          }
+        });
+      }
+    }
+
+    function start() {
+      window.running = true;
+      run();
+    }
+
+    function stop() {
+      window.running = false;
     }
 
     function toggle_mode() {
@@ -134,33 +166,71 @@
     }
   </script>
 </head>
-<body>
-  <p><div>enter program</div>
-  <textarea id="program" cols="100">skki</textarea>
-  </p>
-  <p>
-  <input type="checkbox" id="lazyk_mode" onchange="toggle_mode();" />
-  <span>LazyK application mode</span>
-  </p>
-  <span class="inout_pane" style="display: none">
-    <div>stdin</div>
-    <textarea id="input_buffer" cols="100"></textarea>
-  </span>
-  <p>
-  <input type="button" value="set program" onclick="set_program();" />
-  <input type="button" value="step" onclick="reduce();" />
-  </p>
-  <span class="inout_pane" style="display: none">
-    <div>stdin</div>
-    <div id="stdin_progress"></div>
-    <div>stdout</div>
-    <div id="stdout"></div>
-  </span>
-  <p>
-    <div>combinator expression</div>
-    <div id="expression"> </div>
-  </p>
-  <p>graph expression</p>
-  <div id="graph"></div>
+<body class="bg-info">
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.min.js"></script>
+  <div class="container-fluid bg-info">
+    <div class="row"><div class="col-lg-1"></div><div class="col-lg-10">
+    <div class="row form-group">
+      <div class="col-lg-12">
+        <label for="program">enter program</label>
+        <textarea id="program" class="form-control" cols="100">SKKI</textarea>
+      </div>
+    </div>
+    <div class="row form-group">
+      <div class="col-sm-3">
+        <label class="checkbox-inline">
+          <input type="checkbox" id="lazyk_mode" onchange="toggle_mode();" /> LazyK application
+        </label>
+      </div>
+      <div class="col-sm-1"><input type="button" class="form-control btn btn-default" value="reset" onclick="set_program();" /></div>
+      <div class="col-sm-1"><input type="button" class="form-control btn btn-default" value="step" onclick="reduce();" /></div>
+      <div class="col-sm-1"><input type="button" class="form-control btn btn-default" value="run" onclick="start();" /></div>
+      <div class="col-sm-1"><input type="button" class="form-control btn btn-default" value="stop" onclick="stop();" /></div>
+    </div>
+    <div class="row inout_pane form-group" style="display: none">
+      <div class="col-lg-12">
+        <label for="input_buffer">stdin</label>
+        <div>
+          <textarea id="input_buffer" class="form-control" cols="100"></textarea>
+        </div>
+      </div>
+    </div>
+    <div class="row">
+    </div>
+    <div class="row"></div>
+    <div class="row inout_pane" style="display: none">
+      <div class="col-lg-12">
+        <div class="panel panel-default">
+          <div class="panel-heading">
+            <div class="panel-title">stdin</div>
+          </div>
+          <div id="stdin_progress" class="panel-body"></div>
+        </div>
+        <div class="panel panel-default">
+          <div class="panel-heading">
+            <div class="panel-title">stdout</div>
+          </div>
+          <div id="stdout" class="panel-body"></div>
+        </div>
+      </div>
+    </div>
+    <div class="row">
+      <div class="col-lg-12">
+        <div class="panel panel-default">
+          <div class="panel-heading"><div class="panel-title">combinator expression</div></div>
+          <div id="expression" class="panel-body"> </div>
+        </div>
+      </div>
+    </div>
+    <div class="row">
+      <div class="col-lg-12">
+        <div class="panel panel-default">
+          <div class="panel-heading"><div class="panel-title">graph</div></div>
+          <div id="graph" class="panel-body"> </div>
+        </div>
+      </div>
+    </div>
+    </div><div class="col-lg-1"></div></div>
+  </div>
 </body>
 </html>
