@@ -2,10 +2,13 @@
 <html>
 <head>
   <title>RazyK</title>
+  <meta charset="UTF-8">
   <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.3.2/jquery.min.js"></script>
+  <script type="text/javascript" src="http://d3js.org/d3.v3.min.js" charset="utf-8"></script>
   <script type="text/javascript">
-    var RazyK = function(expression, stdin_read, stdin_remain, stdout, recursive) {
+    var RazyK = function(expression, nodes, stdin_read, stdin_remain, stdout, recursive) {
       this.expression = expression;
+      this.nodes = nodes;
       this.stdin_read = stdin_read;
       this.stdin_remain = stdin_remain;
       this.stdout = stdout;
@@ -19,6 +22,78 @@
         $("#stdout").text(razyk.stdout);
       }
       $("#expression").text(razyk.expression);
+
+      var max_depth_f = function(node, depth) {
+        if (node.children) {
+          return Math.max.apply(null, node.children.map(function(elm){ return max_depth_f(elm, depth+1); }));
+        }
+        return depth;
+      }
+      var max_width_f = function(node, depth, widths) {
+        if (widths[depth]) {
+          widths[depth] += 1;
+        } else {
+          widths[depth] = 1;
+        }
+        if (node.children) {
+          node.children.forEach(function(elm){
+            max_width_f(elm, depth+1, widths);
+          });
+        }
+        if (depth == 1) {
+          return Math.max.apply(null, Object.keys(widths).map(function(elm) { return widths[elm] }));
+        } else {
+          return null;
+        }
+      }
+      var max_depth = max_depth_f(razyk.nodes, 1);
+      var max_width = max_width_f(razyk.nodes, 1, {});
+      $("div#graph").empty();
+      var svg = d3.select("div#graph").append("svg");
+      var width = max_width * 20;
+      var height = max_depth * 20;
+      if (width < 500) { width = 500; }
+      if (width < 1000) { width = 1000; }
+      svg.attr("width", width + 50);
+      svg.attr("height", height + 50);
+      var tree = d3.layout.tree().size([width, height]);
+      var nodes = tree.nodes(razyk.nodes);
+      // segments
+      svg.selectAll("path")
+        .data(tree.links(nodes))
+        .enter()
+        .append("path")
+        .attr("d", d3.svg.diagonal())
+        .attr("fill", "none")
+        .attr("stroke", "black")
+        .attr("stroke-width", 2)
+        .attr("transform", "translate(0, 15)");
+      // circles
+      var coloring = function(d) {
+        if (d.name == "") {
+          return "black";
+        } else if (d.name == "I") {
+          return "blue";
+        } else if (d.name == "K") {
+          return "green";
+        } else if (d.name == "S") {
+          return "red";
+        } else if (d.name == "OUT" || d.name == "PUTC") {
+          return "purple";
+        } else if (d.name == "IN") {
+          return "yellow";
+        } else {
+          return "black";
+        }
+      };
+      svg.selectAll("circle")
+        .data(nodes)
+        .enter()
+        .append("circle")
+        .attr("cx", function(d){return d.x;})
+        .attr("cy", function(d){return d.y+15;})
+        .attr("r", function(d) { if (d.name == "") { return 2; } else { return 10; } })
+        .style("fill", coloring);
     }
 
     function set_program() {
@@ -28,7 +103,7 @@
         program = "($OUT (" + program + " $IN))";
         recursive = false;
       }
-      window.razyk = new RazyK(program, "", $("#input_buffer").val(), "", recursive);
+      window.razyk = new RazyK(program, {name: ""}, "", $("#input_buffer").val(), "", recursive);
       draw(window.razyk);
     }
 
@@ -38,7 +113,7 @@
              {expression: r.expression, stdin_read: r.stdin_read, stdin_remain: r.stdin_remain, stdout: r.stdout, recursive: r.recursive},
             function(data) {
               data = JSON.parse(data);
-              window.razyk = new RazyK(data.expression, data.stdin_read, data.stdin_remain, data.stdout, window.razyk.recursive);
+              window.razyk = new RazyK(data.expression, data.nodes, data.stdin_read, data.stdin_remain, data.stdout, window.razyk.recursive);
               draw(window.razyk);
             });
     }
@@ -79,8 +154,6 @@
     <div id="expression"> </div>
   </p>
   <p>graph expression</p>
-  <iframe id="graph" height="1000" width="100%">
-    using iframe.
-  </iframe>
+  <div id="graph"></div>
 </body>
 </html>

@@ -68,12 +68,15 @@ module RazyK
       vm.reduce
       res = Rack::Response.new
       res.header["Content-Type"] = "application/json"
-      res.write(JSON.generate({
+      json_state = JSON::State.from_state(nil)
+      json_state.max_nesting = 0
+      res.write({
         expression: vm.tree.inspect,
+        nodes: vm.tree.as_json,
         stdin_read: stdin_read + port_in.wrote,
         stdin_remain: port_in.remain,
         stdout: stdout + port_out.string,
-      }))
+      }.to_json(json_state))
       res
     end
 
