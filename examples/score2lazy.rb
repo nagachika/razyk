@@ -29,10 +29,9 @@ def name2tone(s)
       k = 0
     end
   end
-  p [l, o, k]
+  [l, o, k]
 end
 
-p(scores.map{|s| name2tone(s) })
 lazy = "K" + ary2list([tempo, scores.map{|s| name2tone(s) }].flatten)
 puts lazy
 
