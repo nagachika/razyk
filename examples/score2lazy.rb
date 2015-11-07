@@ -1,4 +1,4 @@
-require_relative "examples/encoder"
+require_relative "encoder"
 
 scores = $stdin.read.split(/\s+/m)
 tempo = scores.shift.to_i
