@@ -25,8 +25,8 @@ Gem::Specification.new do |s|
 
   s.add_runtime_dependency "rack"
 
-  s.add_development_dependency "bundler", "~> 1.10"
-  s.add_development_dependency "rake", "~> 10.0"
+  s.add_development_dependency "bundler"
+  s.add_development_dependency "rake"
   s.add_development_dependency "racc"
   s.add_development_dependency "test-unit"
   s.add_development_dependency "simplecov"
